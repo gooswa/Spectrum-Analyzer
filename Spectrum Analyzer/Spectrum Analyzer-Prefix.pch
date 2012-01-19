@@ -1,0 +1,7 @@
+//
+// Prefix header for all source files of the 'Spectrum Analyzer' target in the 'Spectrum Analyzer' project
+//
+
+#ifdef __OBJC__
+    #import <Cocoa/Cocoa.h>
+#endif

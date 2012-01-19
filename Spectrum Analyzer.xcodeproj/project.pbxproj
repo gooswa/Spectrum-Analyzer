@@ -1,0 +1,294 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3C16DFAA14C7BBFD002162F4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C16DFA914C7BBFD002162F4 /* Cocoa.framework */; };
+		3C16DFB414C7BBFD002162F4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3C16DFB214C7BBFD002162F4 /* InfoPlist.strings */; };
+		3C16DFB614C7BBFD002162F4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C16DFB514C7BBFD002162F4 /* main.m */; };
+		3C16DFBA14C7BBFD002162F4 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 3C16DFB814C7BBFD002162F4 /* Credits.rtf */; };
+		3C16DFBD14C7BBFD002162F4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C16DFBC14C7BBFD002162F4 /* AppDelegate.m */; };
+		3C16DFC014C7BBFD002162F4 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C16DFBE14C7BBFD002162F4 /* MainMenu.xib */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		3C16DFA514C7BBFD002162F4 /* Spectrum Analyzer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Spectrum Analyzer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3C16DFA914C7BBFD002162F4 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		3C16DFAC14C7BBFD002162F4 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		3C16DFAD14C7BBFD002162F4 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		3C16DFAE14C7BBFD002162F4 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		3C16DFB114C7BBFD002162F4 /* Spectrum Analyzer-Info.plist */ = {isa = PBXFileReference; path = "Spectrum Analyzer-Info.plist"; sourceTree = "<group>"; };
+		3C16DFB314C7BBFD002162F4 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		3C16DFB514C7BBFD002162F4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		3C16DFB714C7BBFD002162F4 /* Spectrum Analyzer-Prefix.pch */ = {isa = PBXFileReference; path = "Spectrum Analyzer-Prefix.pch"; sourceTree = "<group>"; };
+		3C16DFB914C7BBFD002162F4 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
+		3C16DFBB14C7BBFD002162F4 /* AppDelegate.h */ = {isa = PBXFileReference; path = AppDelegate.h; sourceTree = "<group>"; };
+		3C16DFBC14C7BBFD002162F4 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		3C16DFBF14C7BBFD002162F4 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3C16DFA214C7BBFD002162F4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C16DFAA14C7BBFD002162F4 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3C16DF9A14C7BBFD002162F4 = {
+			isa = PBXGroup;
+			children = (
+				3C16DFAF14C7BBFD002162F4 /* Spectrum Analyzer */,
+				3C16DFA814C7BBFD002162F4 /* Frameworks */,
+				3C16DFA614C7BBFD002162F4 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		3C16DFA614C7BBFD002162F4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3C16DFA514C7BBFD002162F4 /* Spectrum Analyzer.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3C16DFA814C7BBFD002162F4 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				3C16DFA914C7BBFD002162F4 /* Cocoa.framework */,
+				3C16DFAB14C7BBFD002162F4 /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3C16DFAB14C7BBFD002162F4 /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				3C16DFAC14C7BBFD002162F4 /* AppKit.framework */,
+				3C16DFAD14C7BBFD002162F4 /* CoreData.framework */,
+				3C16DFAE14C7BBFD002162F4 /* Foundation.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		3C16DFAF14C7BBFD002162F4 /* Spectrum Analyzer */ = {
+			isa = PBXGroup;
+			children = (
+				3C16DFBB14C7BBFD002162F4 /* AppDelegate.h */,
+				3C16DFBC14C7BBFD002162F4 /* AppDelegate.m */,
+				3C16DFBE14C7BBFD002162F4 /* MainMenu.xib */,
+				3C16DFB014C7BBFD002162F4 /* Supporting Files */,
+			);
+			path = "Spectrum Analyzer";
+			sourceTree = "<group>";
+		};
+		3C16DFB014C7BBFD002162F4 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				3C16DFB114C7BBFD002162F4 /* Spectrum Analyzer-Info.plist */,
+				3C16DFB214C7BBFD002162F4 /* InfoPlist.strings */,
+				3C16DFB514C7BBFD002162F4 /* main.m */,
+				3C16DFB714C7BBFD002162F4 /* Spectrum Analyzer-Prefix.pch */,
+				3C16DFB814C7BBFD002162F4 /* Credits.rtf */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3C16DFA414C7BBFD002162F4 /* Spectrum Analyzer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3C16DFC314C7BBFD002162F4 /* Build configuration list for PBXNativeTarget "Spectrum Analyzer" */;
+			buildPhases = (
+				3C16DFA114C7BBFD002162F4 /* Sources */,
+				3C16DFA214C7BBFD002162F4 /* Frameworks */,
+				3C16DFA314C7BBFD002162F4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Spectrum Analyzer";
+			productName = "Spectrum Analyzer";
+			productReference = 3C16DFA514C7BBFD002162F4 /* Spectrum Analyzer.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3C16DF9C14C7BBFD002162F4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0420;
+				ORGANIZATIONNAME = "Oregon State University (COAS)";
+			};
+			buildConfigurationList = 3C16DF9F14C7BBFD002162F4 /* Build configuration list for PBXProject "Spectrum Analyzer" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 3C16DF9A14C7BBFD002162F4;
+			productRefGroup = 3C16DFA614C7BBFD002162F4 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3C16DFA414C7BBFD002162F4 /* Spectrum Analyzer */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		3C16DFA314C7BBFD002162F4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C16DFB414C7BBFD002162F4 /* InfoPlist.strings in Resources */,
+				3C16DFBA14C7BBFD002162F4 /* Credits.rtf in Resources */,
+				3C16DFC014C7BBFD002162F4 /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3C16DFA114C7BBFD002162F4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C16DFB614C7BBFD002162F4 /* main.m in Sources */,
+				3C16DFBD14C7BBFD002162F4 /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		3C16DFB214C7BBFD002162F4 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3C16DFB314C7BBFD002162F4 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		3C16DFB814C7BBFD002162F4 /* Credits.rtf */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3C16DFB914C7BBFD002162F4 /* en */,
+			);
+			name = Credits.rtf;
+			sourceTree = "<group>";
+		};
+		3C16DFBE14C7BBFD002162F4 /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3C16DFBF14C7BBFD002162F4 /* en */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		3C16DFC114C7BBFD002162F4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		3C16DFC214C7BBFD002162F4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		3C16DFC414C7BBFD002162F4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Spectrum Analyzer/Spectrum Analyzer-Prefix.pch";
+				INFOPLIST_FILE = "Spectrum Analyzer/Spectrum Analyzer-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		3C16DFC514C7BBFD002162F4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Spectrum Analyzer/Spectrum Analyzer-Prefix.pch";
+				INFOPLIST_FILE = "Spectrum Analyzer/Spectrum Analyzer-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3C16DF9F14C7BBFD002162F4 /* Build configuration list for PBXProject "Spectrum Analyzer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3C16DFC114C7BBFD002162F4 /* Debug */,
+				3C16DFC214C7BBFD002162F4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3C16DFC314C7BBFD002162F4 /* Build configuration list for PBXNativeTarget "Spectrum Analyzer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3C16DFC414C7BBFD002162F4 /* Debug */,
+				3C16DFC514C7BBFD002162F4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 3C16DF9C14C7BBFD002162F4 /* Project object */;
+}
