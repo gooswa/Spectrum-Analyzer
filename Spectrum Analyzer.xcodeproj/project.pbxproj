@@ -15,6 +15,7 @@
 		3C16DFC014C7BBFD002162F4 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C16DFBE14C7BBFD002162F4 /* MainMenu.xib */; };
 		3C16DFD014C7C4A8002162F4 /* SerialPort.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C16DFCF14C7C495002162F4 /* SerialPort.framework */; };
 		3C16DFD314C7C50B002162F4 /* BusPirate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C16DFD214C7C50B002162F4 /* BusPirate.m */; };
+		3C429D0614D5C85D00DC2F64 /* ADC.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C429D0514D5C85D00DC2F64 /* ADC.m */; };
 		3C67822314CBA2A500837156 /* Chipkit.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822214CBA2A500837156 /* Chipkit.m */; };
 		3C67822714CBB1CB00837156 /* LMX_PLL.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822614CBB1CB00837156 /* LMX_PLL.m */; };
 		3C67822A14CBC61000837156 /* HardwareInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822914CBC61000837156 /* HardwareInterface.m */; };
@@ -48,6 +49,8 @@
 		3C16DFC714C7C495002162F4 /* SerialPort.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SerialPort.xcodeproj; path = ../frameworks/SerialPort/SerialPort.xcodeproj; sourceTree = "<group>"; };
 		3C16DFD114C7C50B002162F4 /* BusPirate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BusPirate.h; sourceTree = "<group>"; };
 		3C16DFD214C7C50B002162F4 /* BusPirate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BusPirate.m; sourceTree = "<group>"; };
+		3C429D0414D5C85D00DC2F64 /* ADC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ADC.h; sourceTree = "<group>"; };
+		3C429D0514D5C85D00DC2F64 /* ADC.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ADC.m; sourceTree = "<group>"; };
 		3C67822114CBA2A500837156 /* Chipkit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Chipkit.h; sourceTree = "<group>"; };
 		3C67822214CBA2A500837156 /* Chipkit.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Chipkit.m; sourceTree = "<group>"; };
 		3C67822514CBB1CB00837156 /* LMX_PLL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LMX_PLL.h; sourceTree = "<group>"; };
@@ -161,6 +164,8 @@
 				3C67822614CBB1CB00837156 /* LMX_PLL.m */,
 				3C67822B14CC076000837156 /* AD_DDS.h */,
 				3C67822C14CC076000837156 /* AD_DDS.m */,
+				3C429D0414D5C85D00DC2F64 /* ADC.h */,
+				3C429D0514D5C85D00DC2F64 /* ADC.m */,
 			);
 			name = "Module Drivers";
 			sourceTree = "<group>";
@@ -252,6 +257,7 @@
 				3C67822714CBB1CB00837156 /* LMX_PLL.m in Sources */,
 				3C67822A14CBC61000837156 /* HardwareInterface.m in Sources */,
 				3C67822D14CC076000837156 /* AD_DDS.m in Sources */,
+				3C429D0614D5C85D00DC2F64 /* ADC.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
