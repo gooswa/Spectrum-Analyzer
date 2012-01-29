@@ -3,7 +3,7 @@
 //  Spectrum Analyzer
 //
 //  Created by William Dillon on 1/22/12.
-//  Copyright (c) 2012 Oregon State University (COAS). All rights reserved.
+//  Copyright (c) 2012. All rights reserved.
 //
 
 #import "AD_DDS.h"
@@ -54,15 +54,13 @@ static uint8 reverse[16] = {
 
 -(void)initHardware:(HardwareInterface *)interface
 {
+    // It should be safe to assume the pins are already set low.
     // Clock the parallel word once (loads serial mode into config)
-    [interface setPin:Clock Value:0];
     [interface setPin:Clock Value:1];
     [interface setPin:Clock Value:0];
     
-    // Clock the latch
-    [interface setPin:CS Value:0];
+    // Set FqUD high to latch into serial mode
     [interface setPin:CS Value:1];
-    [interface setPin:CS Value:0];
     
     // Now, the device is in serial mode, ready for loading
     // If, for some reason, the device was already in serial mode,

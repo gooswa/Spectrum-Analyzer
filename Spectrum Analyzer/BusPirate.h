@@ -3,7 +3,7 @@
 //  Spectrum Analyzer
 //
 //  Created by William Dillon on 1/18/12.
-//  Copyright (c) 2012 Oregon State University (COAS). All rights reserved.
+//  Copyright (c) 2012. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
