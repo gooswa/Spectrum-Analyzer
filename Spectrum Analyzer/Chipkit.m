@@ -3,7 +3,7 @@
 //  Spectrum Analyzer
 //
 //  Created by William Dillon on 1/21/12.
-//  Copyright (c) 2012 Oregon State University (COAS). All rights reserved.
+//  Copyright (c) 2012. All rights reserved.
 //
 
 #import "Chipkit.h"
@@ -87,7 +87,7 @@ void hexToString(char *string, int len, uint64 hex) {
     data &= mask;
     hexToString(hexBuffer, bytes, data);
     
-    snprintf(buffer, 256, "$s,%ld,%ld,%ld,%d,%s\n", 
+    snprintf(buffer, 256, "$s,%ld,%ld,%ld,%d,%s\r",
              CSPin, dataPin, clockPin, bytes, hexBuffer);
     
     NSLog(@"Writing \"%s\" to the analyzer.", buffer);
@@ -101,9 +101,9 @@ void hexToString(char *string, int len, uint64 hex) {
     char buffer[255];
 
     if (value) {
-        snprintf(buffer, 255, "$p,%ld,1\n", pin);
+        snprintf(buffer, 255, "$p,%ld,1\r", pin);
     } else {
-        snprintf(buffer, 255, "$p,%ld,0\n", pin);        
+        snprintf(buffer, 255, "$p,%ld,0\r", pin);
     }
     
     NSLog(@"Writing \"%s\" to the analyzer.", buffer);
