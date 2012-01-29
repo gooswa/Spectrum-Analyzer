@@ -3,7 +3,7 @@
 //  Spectrum Analyzer
 //
 //  Created by William Dillon on 1/21/12.
-//  Copyright (c) 2012 Oregon State University (COAS). All rights reserved.
+//  Copyright (c) 2012. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -23,5 +23,9 @@
                   bits:(NSInteger)numBits;
 
 - (void)setPin:(NSInteger)pin Value:(bool)value;
+
+- (void)readADCmag:(double *)magData
+             phase:(double *)phaseData;
+
 
 @end
