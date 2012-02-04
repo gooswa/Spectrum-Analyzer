@@ -27,6 +27,7 @@
     HardwareInterface *interface;
     interface = [[Chipkit alloc] initWithPort:@"/dev/tty.usbserial-A6009B2C"];
     analyzer = [[SpectrumAnalyzer alloc] initWithInterface:interface];
+    [analyzer setDelegate:self];
     
     // Set this class to be the delegate for all the text fields
     [PLO1_oFreq setDelegate:self];
@@ -37,6 +38,8 @@
     [PLO3_pFreq setDelegate:self];
     [DDS1_freq  setDelegate:self];
     [DDS3_freq  setDelegate:self];
+    
+    [self configurationChanged];
 }
 
 // 
@@ -157,6 +160,20 @@
     
     [ADC_mag   setFloatValue:mag];
     [ADC_phase setFloatValue:phase];
+}
+
+-(void)configurationChanged
+{
+    // For now, we'll just refreah all of the text feilds
+    // it's less efficient, but much, much simpler.
+    [PLO1_oFreq setDoubleValue:[[analyzer PLO1] outputFreq]];
+    [PLO1_pFreq setDoubleValue:[[analyzer PLO1] phaseFreq]];
+    [PLO2_oFreq setDoubleValue:[[analyzer PLO2] outputFreq]];
+    [PLO2_pFreq setDoubleValue:[[analyzer PLO2] phaseFreq]];
+    [PLO3_oFreq setDoubleValue:[[analyzer PLO3] outputFreq]];
+    [PLO3_pFreq setDoubleValue:[[analyzer PLO3] phaseFreq]];
+    [DDS1_freq  setDoubleValue:[[analyzer DDS1] outputFreq]];
+    [DDS3_freq  setDoubleValue:[[analyzer DDS3] outputFreq]];
 }
 
 @end
