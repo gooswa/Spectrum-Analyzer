@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "ModuleDelegate.h"
 
 @class HardwareInterface;
 
@@ -34,7 +35,7 @@
     
     // Chip options
     bool invertingCP;
-    char  FoLD_output;
+    char FoLD_output;
     bool initialize;
     
     @private
@@ -43,7 +44,11 @@
     
     uint32 int_r_divider;
     uint32 int_n_divider;
+    
+    id<ModuleDelegate> *delegate;
 }
+
+@property(assign) id<ModuleDelegate> *delegate;
 
 @property(readwrite) int CS;
 @property(readwrite) int Data;
@@ -56,5 +61,7 @@
 @property(readwrite) char FoLD_output;
 
 - (void)updateHardware:(HardwareInterface *)interface;
+
+- (void)recalculate;
 
 @end

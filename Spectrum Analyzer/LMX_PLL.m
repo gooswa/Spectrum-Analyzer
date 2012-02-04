@@ -11,6 +11,7 @@
 
 @implementation LMX_PLL
 
+@synthesize delegate;
 @synthesize CS;
 @synthesize Data;
 @synthesize Clock;
@@ -60,10 +61,17 @@
 
 - (void)setRefFreq:(double)newRefFreq
 {
-    refFreq = newRefFreq;
-    
-    // Update computed values with the new reference frequency
-    [self setPhaseFreq:requestedPhaseFreq];
+    if (refFreq != newRefFreq) {
+        refFreq  = newRefFreq;
+        
+        [self recalculate];
+        
+        if (delegate) {
+            if ([(id)delegate respondsToSelector:@selector(moduleDidBecomeStale:)]) {
+                [(id)delegate moduleDidBecomeStale:self];
+            }
+        }
+    }
 }
 
 - (double)phaseFreq
@@ -73,17 +81,17 @@
 
 - (void)setPhaseFreq:(double)newPhaseFreq
 {
-    requestedPhaseFreq = newPhaseFreq;
-    
-    // Calculate dividers and calculate new frequencies
-    double best_r_divider = refFreq / newPhaseFreq;
-    int_r_divider = (uint32)round(best_r_divider);
-    phaseFreq = refFreq / int_r_divider;
-    
-    // Update the output frequency using the requested value
-    // This has the effect of re-computing its actual value given
-    // the new phase frequency
-    [self setOutputFreq:requestedOutputFreq];
+    if (newPhaseFreq != requestedPhaseFreq) {
+        requestedPhaseFreq = newPhaseFreq;
+
+        [self recalculate];
+
+        if (delegate) {
+            if ([(id)delegate respondsToSelector:@selector(moduleDidBecomeStale:)]) {
+                [(id)delegate moduleDidBecomeStale:self];
+            }
+        }
+    }
 }
 
 - (double)outputFreq 
@@ -93,11 +101,28 @@
 
 - (void)setOutputFreq:(double)newOutputFreq
 {
-    requestedOutputFreq = newOutputFreq;
-    
-    double best_n_divider = newOutputFreq / phaseFreq;
+    if (newOutputFreq != requestedPhaseFreq) {
+        requestedOutputFreq = newOutputFreq;
+        
+        [self recalculate];
+        
+        if (delegate) {
+            if ([(id)delegate respondsToSelector:@selector(moduleDidBecomeStale:)]) {
+                [(id)delegate moduleDidBecomeStale:self];
+            }
+        }
+    }
+}
+
+- (void)recalculate
+{
+    // Calculate dividers and calculate new frequencies
+    double best_r_divider = refFreq / requestedPhaseFreq;
+    int_r_divider = (uint32)round(best_r_divider);
+    phaseFreq = refFreq / int_r_divider;
+
+    double best_n_divider = requestedOutputFreq / phaseFreq;
     int_n_divider = (uint32)round(best_n_divider);
-    
     outputFreq = (double)int_n_divider * phaseFreq;
 }
 
@@ -111,6 +136,12 @@
 // have in the real world, rather than the idealized value.
 - (void)updateHardware:(HardwareInterface *)interface
 {
+    if (delegate) {
+        if ([(id)delegate respondsToSelector:@selector(moduleWillUpdateHardware)]) {
+            [(id)delegate moduleWillUpdateHardware:self];
+        }
+    }
+
     // These are the 3 registers that control the PLL
     uint32 registers[3];
 
@@ -129,7 +160,7 @@
     
     // The N divider is made up of the A and B dividers
     registers[N_DIVIDER_REGISTER]  = (int_b_divider & B_COUNTER_MASK) << 7;
-    registers[N_DIVIDER_REGISTER] |= (int_a_divider & A_COUNTER_MASK);
+    registers[N_DIVIDER_REGISTER] |= (int_a_divider & A_COUNTER_MASK) << 2;
     registers[N_DIVIDER_REGISTER] |= N_DIVIDER_REGISTER;
     
     // This register controls all the functions of the PLL
@@ -137,6 +168,7 @@
     registers[FUNCTION_REGISTER]  |= (FoLD_output & FOLD_CONTROL_MASK) << FOLD_CONTROL_OFFSET;
     registers[FUNCTION_REGISTER]  |= (initialize)?  INITIALIZATION : 0;
     registers[FUNCTION_REGISTER]  |= FUNCTION_REGISTER;
+    initialize = NO;
     
     // If the interface is non-null, update the hardware
     if (interface) {
