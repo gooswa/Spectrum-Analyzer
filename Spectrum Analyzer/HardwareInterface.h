@@ -24,8 +24,10 @@
 
 - (void)setPin:(NSInteger)pin Value:(bool)value;
 
-- (void)readADCmag:(double *)magData
-             phase:(double *)phaseData;
+- (void)readADCdelay:(NSInteger)mSDelay
+             samples:(NSInteger)samples
+                 mag:(double *)magData
+               phase:(double *)phaseData;
 
 
 @end

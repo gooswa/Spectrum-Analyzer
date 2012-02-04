@@ -29,4 +29,18 @@
     return;
 }
 
+-(void)readADCdelay:(NSInteger)mSDelay
+            samples:(NSInteger)samples
+                mag:(double *)magData
+              phase:(double *)phaseData
+{
+    // At least keep the minimum timing characteristics the same
+    usleep((int)mSDelay * 1000);
+    
+    *magData = 0.;
+    *phaseData = 0.;
+    
+    return;
+}
+
 @end
