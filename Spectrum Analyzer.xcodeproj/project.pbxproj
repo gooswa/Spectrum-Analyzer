@@ -20,6 +20,10 @@
 		3C67822714CBB1CB00837156 /* LMX_PLL.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822614CBB1CB00837156 /* LMX_PLL.m */; };
 		3C67822A14CBC61000837156 /* HardwareInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822914CBC61000837156 /* HardwareInterface.m */; };
 		3C67822D14CC076000837156 /* AD_DDS.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822C14CC076000837156 /* AD_DDS.m */; };
+		3CEBBDF714DC9D000045F1DE /* MSA_version116_4q.bas in Resources */ = {isa = PBXBuildFile; fileRef = 3CEBBDF614DC9D000045F1DE /* MSA_version116_4q.bas */; };
+		3CEBBDFA14DC9D9E0045F1DE /* SpectrumAnalyzer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CEBBDF914DC9D9E0045F1DE /* SpectrumAnalyzer.m */; };
+		3CEBBE1114DCAEE50045F1DE /* notes.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3CEBBE1014DCAEE50045F1DE /* notes.txt */; };
+		3CEBBE1314DCB07D0045F1DE /* decimate-basic.bas in Resources */ = {isa = PBXBuildFile; fileRef = 3CEBBE1214DCB07D0045F1DE /* decimate-basic.bas */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,6 +63,12 @@
 		3C67822914CBC61000837156 /* HardwareInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HardwareInterface.m; sourceTree = "<group>"; };
 		3C67822B14CC076000837156 /* AD_DDS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AD_DDS.h; sourceTree = "<group>"; };
 		3C67822C14CC076000837156 /* AD_DDS.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AD_DDS.m; sourceTree = "<group>"; };
+		3CEBBDF614DC9D000045F1DE /* MSA_version116_4q.bas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = MSA_version116_4q.bas; sourceTree = "<group>"; };
+		3CEBBDF814DC9D9E0045F1DE /* SpectrumAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpectrumAnalyzer.h; sourceTree = "<group>"; };
+		3CEBBDF914DC9D9E0045F1DE /* SpectrumAnalyzer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpectrumAnalyzer.m; sourceTree = "<group>"; };
+		3CEBBE1014DCAEE50045F1DE /* notes.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = notes.txt; sourceTree = "<group>"; };
+		3CEBBE1214DCB07D0045F1DE /* decimate-basic.bas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "decimate-basic.bas"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
+		3CEBBE1414DCB82F0045F1DE /* ModuleDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ModuleDelegate.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,10 +124,13 @@
 		3C16DFAF14C7BBFD002162F4 /* Spectrum Analyzer */ = {
 			isa = PBXGroup;
 			children = (
-				3C67822414CBB1AD00837156 /* Module Drivers */,
-				3C16DFC614C7BC2D002162F4 /* Hardware interface */,
+				3CEBBDF814DC9D9E0045F1DE /* SpectrumAnalyzer.h */,
+				3CEBBDF914DC9D9E0045F1DE /* SpectrumAnalyzer.m */,
 				3C16DFBB14C7BBFD002162F4 /* AppDelegate.h */,
 				3C16DFBC14C7BBFD002162F4 /* AppDelegate.m */,
+				3CEBBDF514DC9CEE0045F1DE /* Resources */,
+				3C67822414CBB1AD00837156 /* Module Drivers */,
+				3C16DFC614C7BC2D002162F4 /* Hardware interface */,
 				3C16DFBE14C7BBFD002162F4 /* MainMenu.xib */,
 				3C16DFB014C7BBFD002162F4 /* Supporting Files */,
 			);
@@ -166,8 +179,19 @@
 				3C67822C14CC076000837156 /* AD_DDS.m */,
 				3C429D0414D5C85D00DC2F64 /* ADC.h */,
 				3C429D0514D5C85D00DC2F64 /* ADC.m */,
+				3CEBBE1414DCB82F0045F1DE /* ModuleDelegate.h */,
 			);
 			name = "Module Drivers";
+			sourceTree = "<group>";
+		};
+		3CEBBDF514DC9CEE0045F1DE /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				3CEBBDF614DC9D000045F1DE /* MSA_version116_4q.bas */,
+				3CEBBE1214DCB07D0045F1DE /* decimate-basic.bas */,
+				3CEBBE1014DCAEE50045F1DE /* notes.txt */,
+			);
+			name = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -240,6 +264,9 @@
 				3C16DFB414C7BBFD002162F4 /* InfoPlist.strings in Resources */,
 				3C16DFBA14C7BBFD002162F4 /* Credits.rtf in Resources */,
 				3C16DFC014C7BBFD002162F4 /* MainMenu.xib in Resources */,
+				3CEBBDF714DC9D000045F1DE /* MSA_version116_4q.bas in Resources */,
+				3CEBBE1114DCAEE50045F1DE /* notes.txt in Resources */,
+				3CEBBE1314DCB07D0045F1DE /* decimate-basic.bas in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -258,6 +285,7 @@
 				3C67822A14CBC61000837156 /* HardwareInterface.m in Sources */,
 				3C67822D14CC076000837156 /* AD_DDS.m in Sources */,
 				3C429D0614D5C85D00DC2F64 /* ADC.m in Sources */,
+				3CEBBDFA14DC9D9E0045F1DE /* SpectrumAnalyzer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
