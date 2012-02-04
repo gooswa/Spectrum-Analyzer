@@ -3,16 +3,16 @@
 //  Spectrum Analyzer
 //
 //  Created by William Dillon on 2/3/12.
-//  Copyright (c) 2012 Oregon State University (COAS). All rights reserved.
+//  Copyright (c) 2012. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
+#import "ModuleDelegate.h"
 #import "BusPirate.h"
 #import "Chipkit.h"
 #import "LMX_PLL.h"
 #import "AD_DDS.h"
 #import "ADC.h"
-
 
 typedef struct {
     float frequency;
@@ -28,7 +28,7 @@ typedef struct {
 
 @end
 
-@interface SpectrumAnalyzer : NSObject
+@interface SpectrumAnalyzer : NSObject <ModuleDelegate>
 {
     HardwareInterface *interface;
     
@@ -36,8 +36,10 @@ typedef struct {
     AD_DDS  *DDS1, *DDS3;
     ADC     *adc;
     
+    id <SpectrumAnalyerDelegate> delegate;
 }
 
+@property(assign) id<SpectrumAnalyerDelegate> delegate;
 @property(readonly) LMX_PLL *PLO1;
 @property(readonly) LMX_PLL *PLO2;
 @property(readonly) LMX_PLL *PLO3;

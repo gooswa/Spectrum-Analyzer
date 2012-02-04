@@ -3,13 +3,14 @@
 //  Spectrum Analyzer
 //
 //  Created by William Dillon on 2/3/12.
-//  Copyright (c) 2012 Oregon State University (COAS). All rights reserved.
+//  Copyright (c) 2012). All rights reserved.
 //
 
 #import "SpectrumAnalyzer.h"
 
 @implementation SpectrumAnalyzer
 
+@synthesize delegate;
 @synthesize PLO1;
 @synthesize PLO2;
 @synthesize PLO3;
@@ -36,6 +37,7 @@
         PLO2.refFreq = 64.0;
         PLO2.phaseFreq = 4.0;
         PLO2.outputFreq = 1024.0;
+        [PLO2 setDelegate:(id <ModuleDelegate>*)self];
         [PLO2 updateHardware:interface];
         
         // Setup DDS1
@@ -45,6 +47,7 @@
         DDS1.Clock = 5;
         DDS1.refFreq = 64.0;
         DDS1.outputFreq = 10.7;
+        [DDS1 setDelegate:(id <ModuleDelegate>*)self];
         [DDS1 initHardware:interface];
         [DDS1 updateHardware:interface];
         
@@ -57,6 +60,7 @@
         PLO1.refFreq = 10.7;
         PLO1.phaseFreq = 0.972;
         PLO1.outputFreq = 1450.;
+        [PLO1 setDelegate:(id <ModuleDelegate>*)self];
         [PLO1 updateHardware:interface];
         
         // Setup DDS3
@@ -66,6 +70,7 @@
         DDS3.Clock = 13;
         DDS3.refFreq = 64.0;
         DDS3.outputFreq = 10.7;
+        [DDS3 setDelegate:(id <ModuleDelegate>*)self];
         [DDS3 initHardware:interface];
         [DDS3 updateHardware:interface];
         
@@ -78,9 +83,10 @@
         PLO3.refFreq = 10.7;
         PLO3.phaseFreq = 0.972;
         PLO3.outputFreq = 1450;
+        [PLO3 setDelegate:(id <ModuleDelegate>*)self];
         [PLO3 updateHardware:interface];
     }
-    
+        
     return self;
 }
 
@@ -122,6 +128,36 @@
     }
 
     return results;
+}
+
+
+
+-(void)moduleWillUpdateHardware:(id)sender
+{
+    return;
+}
+
+-(void)moduleDidBecomeStale:(id)sender
+{
+    // Because the DDS1 state changed, we need to re-compute the PLO1 stuff
+    if (sender == DDS1) {
+        [PLO1 setRefFreq:[DDS1 outputFreq]];
+        [DDS1 updateHardware:interface];
+        [PLO1 updateHardware:interface];
+    }
+
+    // PLO3 is connected to DDS3
+    if (sender == DDS3) {
+        [PLO3 setRefFreq:[DDS3 outputFreq]];
+        [DDS3 updateHardware:interface];
+        [PLO3 updateHardware:interface];
+    }
+    
+    if (delegate) {
+        if ([delegate respondsToSelector:@selector(configurationChanged)]) {
+            [delegate configurationChanged];
+        }
+    }
 }
 
 @end
