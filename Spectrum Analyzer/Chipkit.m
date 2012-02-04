@@ -10,14 +10,27 @@
 
 @implementation Chipkit
 
+void hexToString(char *string, int len, uint64 hex);
+
 -(id)initWithPort:(NSString *)path {
     self = [super init];
     
     if (self) {
         // Open the serial port
         port = [[SerialPort alloc] init:path
-                              withSpeed:9600
+                              withSpeed:115200
                                andFlags:SERIAL_PORT_N81];
+        
+        // If the port failed to open we're not able to work.
+        if (!port) {
+            [self release];
+            self = nil;
+            return self;
+        }
+        
+        // The process of opening the port resets the chipkit
+        // we have to wait for the bootloader to finish.
+        sleep(5);
     }
     
     return self;
@@ -71,7 +84,7 @@ void hexToString(char *string, int len, uint64 hex) {
 
     char buffer[256];
     
-    NSLog(@"Number of bytes needed to store %ld bits: %d.", numBits, bytes);
+//    NSLog(@"Number of bytes needed to store %ld bits: %d.", numBits, bytes);
     
     // This stores the converted hex representation of the data.  Includes a null
     char *hexBuffer = (char *)malloc(bytes * 2 + 1);
@@ -90,7 +103,7 @@ void hexToString(char *string, int len, uint64 hex) {
     snprintf(buffer, 256, "$s,%ld,%ld,%ld,%d,%s\r",
              CSPin, dataPin, clockPin, bytes, hexBuffer);
     
-    NSLog(@"Writing \"%s\" to the analyzer.", buffer);
+//    NSLog(@"Writing \"%s\" to the analyzer.", buffer);
     
     // Send to the device
     [port putString:[NSString stringWithCString:buffer encoding:NSUTF8StringEncoding]];
@@ -106,9 +119,35 @@ void hexToString(char *string, int len, uint64 hex) {
         snprintf(buffer, 255, "$p,%ld,0\r", pin);
     }
     
-    NSLog(@"Writing \"%s\" to the analyzer.", buffer);
+//    NSLog(@"Writing \"%s\" to the analyzer.", buffer);
     [port putString:[NSString stringWithCString:buffer encoding:NSUTF8StringEncoding]];
     
+}
+
+-(void)readADCdelay:(NSInteger)mSDelay
+            samples:(NSInteger)samples
+                mag:(double *)magData
+              phase:(double *)phaseData
+{
+    char buffer[256];
+    
+    // Send the ADC command
+    snprintf(buffer, 256, "$a,%ld\r", mSDelay);
+//    NSLog(@"Writing \"%s\" to the analyzer.", buffer);
+    [port putString:[NSString stringWithCString:buffer encoding:NSUTF8StringEncoding]];
+    
+    // Read the result
+    NSString *result = [port getLine];
+    
+    // Capture weird line-end conditions
+    if ([result length] < 3) {
+        result = [port getLine];        
+    }
+    
+    sscanf([result cStringUsingEncoding:NSUTF8StringEncoding], 
+           "$A,%lf,%lf", magData, phaseData);
+    
+    return;
 }
 
 @end
