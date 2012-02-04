@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "ModuleDelegate.h"
 
 @class HardwareInterface;
 
@@ -25,7 +26,11 @@
     
     // Delta phase value
     uint32 deltaPhase;
+    
+    id<ModuleDelegate> *delegate;
 }
+
+@property(assign) id<ModuleDelegate> *delegate;
 
 @property(readwrite) int CS;
 @property(readwrite) int Data;
@@ -37,5 +42,7 @@
 
 - (void)initHardware:(HardwareInterface *)interface;
 - (void)updateHardware:(HardwareInterface *)interface;
+
+- (void)recalculate;
 
 @end

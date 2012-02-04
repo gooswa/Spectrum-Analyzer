@@ -8,15 +8,14 @@
 
 #import "AD_DDS.h"
 #import "HardwareInterface.h"
+#import "SpectrumAnalyzer.h"
 
 @implementation AD_DDS
 
+@synthesize delegate;
 @synthesize CS;
 @synthesize Data;
 @synthesize Clock;
-@synthesize refFreq;
-@synthesize phase;
-@synthesize outputFreq;
 @synthesize powerDown;
 
 static uint8 reverse[16] = {
@@ -75,7 +74,71 @@ static uint8 reverse[16] = {
 
 // This is applied to the phase/control word (bits 33 through 40)
 
-- (void)updateHardware:(HardwareInterface *)interface
+-(double)phase
+{
+    return phase;
+}
+
+-(void)setPhase:(double)newPhase
+{
+    if (phase != newPhase) {
+        phase = newPhase;
+        
+        [self recalculate];
+        
+        if (delegate) {
+            if ([(id)delegate respondsToSelector:@selector(moduleDidBecomeStale:)]) {
+                [(id)delegate moduleDidBecomeStale:self];
+            }
+        }
+    }
+}
+
+-(double)outputFreq
+{
+    return outputFreq;
+}
+
+-(void)setOutputFreq:(double)newOutputFreq
+{
+    if (newOutputFreq > (refFreq / 2)) {
+        return;
+    }
+    
+    if (outputFreq != newOutputFreq) {
+        outputFreq = newOutputFreq;
+        
+        [self recalculate];
+        
+        if (delegate) {
+            if ([(id)delegate respondsToSelector:@selector(moduleDidBecomeStale:)]) {
+                [(id)delegate moduleDidBecomeStale:self];
+            }
+        }
+    }
+}
+
+-(double)refFreq
+{
+    return refFreq;
+}
+
+-(void)setRefFreq:(double)newRefFreq
+{
+    if (refFreq != newRefFreq) {
+        refFreq = newRefFreq;
+        
+        [self recalculate];
+        
+        if (delegate) {
+            if ([(id)delegate respondsToSelector:@selector(moduleDidBecomeStale:)]) {
+                [(id)delegate moduleDidBecomeStale:self];
+            }
+        }
+    }
+}
+
+- (void)recalculate
 {
     // Calculate the delta phase value
     // This is the equation from the data sheet, but
@@ -90,7 +153,16 @@ static uint8 reverse[16] = {
     // Re-calculate the output frequency from the delta phase
     // This is the same equation that's in the datasheet
     outputFreq = ((double)deltaPhase * refFreq) / exp2(32);
-    
+}
+
+- (void)updateHardware:(HardwareInterface *)interface
+{
+    if (delegate) {
+        if ([(id)delegate respondsToSelector:@selector(moduleWillUpdateHardware:)]) {
+            [(id)delegate moduleWillUpdateHardware:self];
+        }
+    }
+
     // If we have a hardware interface, update the device
     if (interface) {
         uint64 reg = deltaPhase;
