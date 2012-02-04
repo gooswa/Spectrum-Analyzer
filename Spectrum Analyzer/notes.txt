@@ -1,0 +1,1356 @@
+'-------------Sequence of Main Routine for Original or Slim MSA/TG/VNA---------------
+'Notes: The SLIM MSA (SLIM Control Board) can command all 6 modules at one time (PLO1,DDS1,PLO3,DDS3,PDM,FilterBank).
+'        However, the FilterBank is commanded independently. So is PLO2.
+'       The Original MSA (original Control Board) must command the modules independently.
+
+'1.Establish User Global variables from external msaconfig.txt
+'2.Establish hard Global variables
+'3.Create Working Window, for Spectrum Analyzer Mode, and insert the Default Global Variables
+'4.measure computer speed and update global, glitchtime
+'5.Command Filter Bank to Path one
+'   access the Path 1 Magnitude Calibration Table
+'   access the MagError vs Freq Calibration Table
+'6.if configured, initialize DDS3 by resetting to serial mode. Frequency is commanded to zero
+'7.if configured, initialize PLO3. No frequency command yet.
+'8.initialize and command PLO2 to proper frequency
+'9.Initialize PLO 1. No frequency command yet.
+'10.initialize DDS1 by reseting to serial mode. Frequency is commanded to zero
+'11.[GrabWorkingWindowData] get info from Working Window and update variables
+'12.[CreateGraphWindow], using Working Window data
+'13.Calculate the command information for first step through last step of the sweep and put in arrays
+'14.[StartSweep]'Begin sweeping from step 0
+'15.[CommandThisStep](1.9ms). command relevant Control Board and modules
+'16.Determine sequence of operations after commanding the modules
+'    a. if in OneStep mode, then
+'       add extra settling time
+'       read data of thisstep. gosub [ReadStep]
+'       process data of thisstep. gosub [ProcessAndPrint]
+'       wait here, until the next button push
+'    b. if ThisStep is the first step after a halt, then
+'        add extra settling time
+'        read data of thisstep. gosub [ReadStep]
+'        goto [Scan]
+'    c. if ThisStep is not the first step after halt (middle of sweep), then
+'        process and print the Previous Step. gosub [ProcessAndPrintLastStep](3.8ms)
+'           [ProcessAndPrint](3.8ms)                           /1.9
+'               [ConvertMagPhaseData](2.5ms)                      /.53
+'                   call calConvertMagPhase(1.2ms)
+'                   freqerror=calConvertFreqError(thisfreq)(0.9ms)  /.085
+'                   [CalcMagpowerPixel](0.4ms)
+'               [PlotDataToScreen](1.3ms)                         /1.3
+'        read data of thisstep. gosub [ReadStep](1.9ms)
+'        goto [Scan]
+'17.[Scan] Check to see if a button has been pushed
+'   If a button was pushed (other than OneStep) goto [Halted]
+'   If not, continue to [IncrementOneStep]
+'18.[IncrementOneStep]
+'   add 1 to the value of thisstep
+'   if the new value of thisstep exceeds the number of steps in this sweep
+'       "Glue" the full sweep plot into memory
+'       go back to [StartSweep]
+'   if not, go back to [CommandThisStep] and continue sweeping
+'19.[Halted]
+'   process and print ThisStep. gosub [ProcessAndPrint]
+'   reprint Graph lines and text. gosub [PrintGraph]
+'   "Glue" Graph into memory
+'   wait for operator action.
+
+
+[InitializeHardware]
+    'These hardware initializations are performed on startup and usually repeated on Restart. The reason
+    'they are repeated on Restart is to fix any hardware glitches that might occur. Whenever it is known
+    'that a hardware change is made, such as filter selection changing, it is best to take action immediately,
+    'and not rely on the Restart process. In some cases, Restart skips these initializations for speed.
+    if suppressHardware=0 and cb<3 then  'ver115-6c USB:02-08-2010 added cb test
+        out port, 0                 'begin with all data lines low
+        if cb = 2 then  'ver116-1b
+            out control, INITSELT 'latch "0" into SLIM Control Board Buffers 1 and 2
+            out control, AUTO 'latch "0" into SLIM Control Board Buffers 3
+            'We don't clear SLIM Buffer 4, because it controls among other things the latched switches
+            'It was initialized near the beginning to make the PS line high.
+        end if
+        out control, contclear      'begin with all control lines low
+    end if
+    if (cb = 3) and (bUseUSB<>0) then 'USB:01-08-2010
+        USBwrbuf$ = "A5010000" ' reset all lines low 'USB:01-08-2010
+        if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf$ as ptr, 4 as short, result as boolean 'USB:01-08-2010
+    end if 'USB:01-08-2010
+     'the following are meaningless values to guarantee first time commanding. Used in subroutine, [DetermineModule]
+    lastdds1output = appxdds1:lastdds3output = appxdds3:lastpdmstate = 2 'ver111-28
+    lastncounter1 = 0 : lastncounter3 = 0 'to guarantee Original MSA will command PLL's after init. ver114-6c
+    error$="" : errora$=""  'ver115-1c
+
+    'Initialize Final Filter path. 
+    call CommandFilter filtbank   'Commands and sets filtbank. Does nothing if suppressHardware=1. ver115-6c
+
+    call SelectVideoFilter  'reselect video filter in case a glitch got it 'ver116-1b
+    'Note we don't reset the latched switches on Restart (for startup, they are set when prefs are loaded),
+    'because it can get obnoxius and requires a time delay.
+    'Plus, we don't want to set them when the user makes a change, and immediately set again on Restart.
+    'These switches are properly set whenever DetectChanges is called, which should take care of them.
+    'ver116-4d deleted call to SelectLatchedSwitches
+
+'6.if configured, initialize DDS3 by reseting to serial mode. Frequency is commanded to zero
+    if suppressHardware then goto [SkipHardwareInitialization]  'In case there is no hardware ver115-6c
+    if TGtop = 0 then goto [endInitializeTrkGen]' there is no Tracking Generator ver111-22
+    'Initialize DDS 3
+        if cb = 0 and TGtop = 2 then Jcontrol = INIT:swclk = 32:sfqud = 2:gosub [ResetDDS3ser] 'ver111-7
+        '[ResetDDS3ser]needs:port,control,Jcontrol,swclk,sfqud,contclear ; resets DDS3 into Serial mode
+        if cb = 2 then gosub [ResetDDS3serSLIM] 'ver111-29
+        if cb = 3 then gosub [ResetDDS3serUSB]  'USB:01-08-2010
+'7.if configured, initialize PLO3. No frequency command yet.
+    'Initialize PLL 3. 'CreatePLL3R,CommandPLL3R
+        appxpdf=PLL3phasefreq 'ver111-4
+        if TGtop = 1 then reference=masterclock 'ver111-4
+        if TGtop = 2 then reference=appxdds3 'ver111-4
+        gosub [CreateRcounter]'needs:reference,appxpdf ; creates:rcounter 'ver111-14
+        rcounter3=rcounter : pdf3=pdf 'ver111-7
+    'CommandPLL3R and Init Buffers
+        datavalue = 8:levalue = 4 'PLL3 data and le bit values ver111-28
+        gosub [CommandPLL3R]'needs:PLL3mode,PLL3phasepolarity,INIT,PLL3 ; Initializes and commands PLL3 R Buffer(s) 'ver111-7
+[endInitializeTrkGen]   'skips to here if no TG
+
+'8.initialize and command PLO2 to proper frequency
+    'CreatePLL2R
+        appxpdf=PLL2phasefreq 'ver111-4
+        reference=masterclock 'ver111-4
+        gosub [CreateRcounter]'needed:reference,appxpdf ; creates:rcounter,pdf 'ver111-14
+        rcounter2 = rcounter 'ver111-7
+        pdf2 = pdf    'actual phase detector frequency of PLL 2 'ver111-7
+    'CommandPLL2R and Init Buffers
+        datavalue = 16: levalue = 16 'PLL2 data and le bit values ver111-28
+        gosub [CommandPLL2R]'needs:PLL2phasepolarity,SELT,PLL2 ; Initializes and commands PLL2 R Buffer(s)
+    'CreatePLL2N
+        appxVCO = appxLO2 : reference = masterclock
+        gosub [CreateIntegerNcounter]'needs:appxVCO,reference,rcounter ; creates:ncounter,fcounter(0)
+        ncounter2 = ncounter:fcounter2 = fcounter
+        gosub [CreatePLL2N]'needs:ncounter,fcounter,PLL2 ; returns with Bcounter,Acounter, and N Bits N0-N23
+        Bcounter2=Bcounter: Acounter2=Acounter
+        LO2=((Bcounter*preselector)+Acounter+(fcounter/16))*pdf2 'actual LO2 frequency  'ver115-1c LO2 is now global
+    'CommandPLL2N
+        Jcontrol = SELT : LEPLL = 8
+        datavalue = 16: levalue = 16 'PLL2 data and le bit values ver111-28
+        gosub [CommandPLL]'needs:N23-N0,control,Jcontrol,port,contclear,LEPLL ; commands N23-N0,old ControlBoard ver111-5
+
+'9.Initialize PLO 1. No frequency command yet.
+    '[InitializePLL1]'set PLL1 to proper Rcount and initialize
+'        appxpdf=PLL1phasefreq 'ver111-4
+'        reference=appxdds1 'ver111-4
+'        gosub [CreateRcounter]'needed:reference,appxpdf ; creates:rcounter,pdf 'ver111-4
+'        rcounter1 = rcounter 'ver111-4
+        'Create rcounter1 ver114-2e
+    rcounter1=int(appxdds1/PLL1phasefreq)   'ver114-2e
+    if (appxdds1/PLL1phasefreq) - rcounter1 >= 0.5 then rcounter1 = rcounter1 + 1   'rounds off rcounter  ver114-2e
+    if spurcheck=1 and PLL1mode=0 then rcounter1 = rcounter1 +1 'only do this for IntegerN PLL  ver114-2e
+
+    'CommandPLL1R and Init Buffers
+    datavalue = 2: levalue = 1 'PLL1 data and le bit values ver111-28
+    gosub [CommandPLL1R]'needs:rcounter1,PLL1mode,PLL1phasepolarity,SELT,PLL1 ; Initializes and commands PLL1 R Buffer(s)
+
+'10.initialize DDS1 by resetting. Frequency is commanded to zero
+    'It should power up in parallel mode, but could power up in a bogus condition.
+    if cb = 0 and dds1parser = 0 then gosub [ResetDDS1par]'(Orig Control)'needs:control,STRBAUTO,contclear ; resets DDS1 on J5, parallel ver111-21
+    if cb = 0 and dds1parser = 1 then gosub [ResetDDS1ser]'(Orig Control)'needed:control,AUTO,STRB,contclear  ; resets DDS1 on J5, into serial mode ver111-21
+    if cb = 2 then gosub [ResetDDS1serSLIM]'reset serial DDS1 without disturbing Filter Bank or PDM 'ver111-29
+    if cb = 3 then gosub [ResetDDS1serUSB]'reset serial DDS1 without disturbing Filter Bank or PDM  'USB:01-08-2010
+    
+    '13.Calculate the command information for first step through last step of the sweep and put in arrays
+    cursor hourglass    'ver116-4k
+    if suppressHardware then    'ver115-6c
+            'These are taken from the routines we are skipping
+        for i=0 to steps
+            thisfreq=gGetPointXVal(i+1)    'Point number is 1 greater than step number SEWgraph
+            if msaMode$<>"SA" then  'Store actual signal freq in VNA arrays ver116-1b
+                if msaMode$="Reflection" then ReflectArray(thisstep,0)=thisfreq _
+                                else S21DataArray(thisstep,0)=thisfreq
+            end if
+            if FreqMode<>1 then thisfreq=Equiv1GFreq(thisfreq)  'Convert from display freq to equivalent 1G frequency
+            datatable(i,0) = thisstep    'put current step number into the array, row value= thisstep 'moved ver111-18
+            datatable(i,1) = thisfreq
+            phaarray(i,0) = 0   'pdm state
+        next i
+    else    'Do these only if we are using the hardware 'ver115-6c
+        gosub [CalculateAllStepsForLO1Synth] 'ver111-18
+        if TGtop > 0 then gosub [CalculateAllStepsForLO3Synth] 'ver111-18
+        gosub [CreateCmdAllArray] 'ver111-31b
+    end if
+    call CalcFreqCorrection     'Calculate power correction at each frequency SEWgraph1
+    cursor normal   'ver116-4k
+    if msaMode$="SA" and frontEndActiveFilePath$<>"" then call frontEndInterpolateToScan  'Calculate corrections for front end ver115-9d
+    continueCode=0    'SEWgraph Set to other values by subroutines to cause halt, wait or restart
+
+'14.[StartSweep]'Begin sweeping from step 0
+'StartSweep begins the outer loop that repeats the entire scan process until halted.
+'The scan loop continues until a user action which aborts the scan, or in the case of
+'OneStep it continues only for a single point. If specialOneSweep=1 or HaltAtEnd=1, it
+'automatically stops at the end of a single sweep.
+    scanResumed=0 'used to indicate whether we start with a new scan(0) or resume where we left off(1)SEW
+    haltedAfterPartialRestart=0 'May get set to 1 a few lines below. 116-1b
+    'ver114-6e Normally, refresh will occur at end of scan only if halted or refreshEachScan=1,
+    'and will be done by expedited methods. But if the user makes certain changes, the following
+    'variables are used to force more extensive redrawing.
+    call mDeleteMarker "Halt"    'ver114-4h moved the -4d version
+    suppressSweepTime=1     'to suppress it for the first scan ver114-4h
+        'if we just want to go through the initialization procedure we set returnBeforeFirstStep
+        'and invoke [Restart] with a gosub; here we return to the caller
+
+        'Save some sweep settings for reflection and transmission for use when changing
+        'back to a previously used mode, so we know the nature of the last gathered data
+    if msaMode$="Reflection" then   'ver116-1b
+        refLastSteps=steps : refLastStartFreq=startfreq : refLastEndFreq=endfreq : refLastIsLinear=gGetXIsLinear()
+        refLastGraphR0=S11GraphR0
+        refLastY1Type=Y1DataType : refLastY1Top=Y1Top : refLastY1Bot=Y1Bot : refLastY1AutoScale=autoScaleY1
+        refLastY2Type=Y2DataType : refLastY2Top=Y2Top : refLastY2Bot=Y2Bot : refLastY2AutoScale=autoScaleY2
+        for i=1 to 4 : refLastTitle$(i)=gGetTitleLine$(i) : next i
+    else
+        if msaMode$="VectorTrans" then
+            transLastSteps=steps : transLastStartFreq=startfreq : transLastEndFreq=endfreq : transLastIsLinear=gGetXIsLinear()
+            transLastGraphR0=S21JigR0
+            transLastY1Type=Y1DataType : transLastY1Top=Y1Top : transLastY1Bot=Y1Bot : transLastY1AutoScale=autoScaleY1
+            transLastY2Type=Y2DataType : transLastY2Top=Y2Top : transLastY2Bot=Y2Bot : transLastY2AutoScale=autoScaleY2
+            for i=1 to 4 : transLastTitle$(i)=gGetTitleLine$(i) : next i
+        end if
+    end if
+
+    if returnBeforeFirstStep then   'ver115-2a
+        thisstep=sweepStartStep
+        returnBeforeFirstStep=0
+        haltedAfterPartialRestart=1 'ver116-1b
+        gosub [CleanupAfterSweep]
+        return    'ver115-1d
+    end if
+[StartSweep]'enters from above, or [IncrementOneStep]or[FocusKeyBox]([OneStep][Continue])
+    ' USB:15/08/10
+    ' this code may (or may not) be optimally placed.
+    ' it sets the ADC parameters for USB and should only be run
+    ' as necessary. Here seemed like a reasonable comproomise.
+    ' there is a similar function in the CommandAllSlimsUsb function
+    ' but that one uses step 0 to decide (which is also a bit dodgy)
+    if cb = 3 then ' USB:15/08/10
+        if adconv = 16 then 'USB:05/12/2010
+            UsbAdcControl.Clocking.struct = 0 'USB:05/12/2010
+            UsbAdcControl.Delay.struct = 0 'USB:05/12/2010
+            UsbAdcControl.Bits.struct = 16 'USB:05/12/2010
+            UsbAdcControl.Average.struct = 1 'USB:05/12/2010
+        else 'USB:05/12/2010
+            if adconv = 22 then 'USB:05/12/2010
+                UsbAdcControl.Clocking.struct = 1 'USB:05/12/2010
+                UsbAdcControl.Delay.struct = 1 'USB:05/12/2010
+                UsbAdcControl.Bits.struct = 10 'USB:05/12/2010
+                UsbAdcControl.Average.struct = 1 'USB:05/12/2010
+            else 'USB:05/12/2010
+                ' this is an error - so to be safe cheat and say it is a type 16
+                ' ought to return an error but I do not know how to do that in Liberty basic
+                UsbAdcControl.Clocking.struct = 0 'USB:05/12/2010
+                UsbAdcControl.Delay.struct = 2 'USB:05/12/2010
+                UsbAdcControl.Bits.struct = 16 'USB:05/12/2010
+                UsbAdcControl.Average.struct = 1 'USB:05/12/2010
+            end if 'USB:05/12/2010
+        end if 'USB:05/12/2010
+    end if  ' USB:15/08/10
+
+    if specialOneSweep then haltAtEnd=1 else haltAtEnd=0   'ver115-8d moved this here
+    if haltedAfterPartialRestart=0 and scanResumed=1 then   'ver116-1b
+        'For a resumed scan, a halt occurred after the previous step and that step was fully processed.
+        'haltsweep will equal 0. If alternateSweep=0 and the halt occurred at the end of a sweep, we need to
+        'repeat the last point as the first point of the new sweep. But in the case where we are continuing
+        'after a halt resulting from partial restart, we returned before the first step was taken and need to
+        'start with that step.
+        call mDeleteMarker "Halt"    'ver114-4h moved the -4d version
+        if thisstep = sweepStartStep and syncsweep = 1 then gosub [SyncSweep] 'ver112-2b; ver114-4k
+        if alternateSweep=0 or haltWasAtEnd=0 then  'ver114-5c Go to next step unless we need to repeat this one
+            if sweepDir=1 then
+                if thisstep<sweepEndStep then thisstep = thisstep + 1 else thisstep=sweepStartStep
+            else
+                if thisstep>sweepEndStep then thisstep = thisstep - 1 else thisstep=sweepStartStep
+            end if
+        end if
+    else    'ver114-5c No longer need to retest scanResumed
+        thisstep=sweepStartStep  'ver114-4k
+    end if
+    haltedAfterPartialRestart=0 'Reset. Will stay zero until next partial restart. 116-1b
+    scanResumed=0   'Reset flag
+
+'15.[CommandThisStep]. command relevant Control Board and modules
+'SEW CommandThisStep begins the inner loop that moves from step to step to complete a single
+'SEW scan.This branch label is accessed only from the end of the loop.
+[CommandThisStep]'needs:thisstep ; commands PLL1,DDS1,PLL3,DDS3,PDM 'ver111-7
+    'a. first, check to see if any or all the 5 module commands are necessary [DetermineModule]
+    'b. calculate how much delay is needed for each module[DetermineModule], but use only the largest one[WaitStatement].
+    'c. send individual data, clocks, and latch commands that are necessary for[CommandOrigCB]
+      'or for SLIM, use [CommandAllSlims] for commanding concurrently 'ver111-31c
+    gosub [CommandCurrentStep]  'ver116-4j made this a separate routine
+
+'16.Determine sequence of operations after commanding the modules
+    if onestep = 1 then  'in the One Step mode
+        glitchhlt = 10 'add extra settling time
+        gosub [ReadStep] 'read this step
+        gosub [ProcessAndPrint] 'process and print this step
+        call DisplayButtonsForHalted    'ver114-4f replaced call to [UpdateBoxes]
+        call mAddMarker "Halt", thisstep+1, "1"   'ver114-4d
+            'If marker is shown on graph, we need to redraw the whole graph
+            'Otherwise just redraw the marker info
+        if doGraphMarkers then call RefreshGraph 0 else call mDrawMarkerInfo  'No erasure gap in redraw ver114-5m
+        if thisstep=sweepEndStep then
+            'Note reversal is after graph is redrawn
+            if alternateSweep then gosub [ReverseSweepDirection] 'ver114-4m; ver114-5e
+            haltWasAtEnd=1  'ver114-5c
+        else
+            haltWasAtEnd=0  'ver114-5c
+        end if
+        wait 'wait here for next button push ver113-6d
+    end if
+
+    if haltsweep = 0 then 'in first step after a Halt
+        haltsweep = 1 'change flag to say we are not in first step after a Halt, for future steps
+        glitchhlt = 10  'add extra settling time
+        gosub [ReadStep] 'read this step 'ver113-6d
+    else  'if neither, then in middle of sweep. process and print the previous step, then read this step
+        gosub [ProcessAndPrintLastStep]
+        gosub [ReadStep]'read this step 'ver113-6d
+    end if
+        'ver116-4k moved sweep time here, so it prints after any refresh action from the prior scan
+    if displaySweepTime and thisstep=sweepStartStep then
+        currTime=Time$("ms")
+        if suppressSweepTime=0 then _
+                message$= "Sweep Time=";using("####.##", (currTime-startTime)/1000);" sec." : call PrintMessage   'ver114-4h
+        suppressSweepTime=0 'Only suppress on first scan 'ver114-4h
+        startTime=currTime       'SEWgraph timer for testing
+    end if
+    
+    [CommandCurrentStep]'needs:thisstep ; commands PLL1,DDS1,PLL3,DDS3,PDM 'ver111-7
+    'a. first, check to see if any or all the 5 module commands are necessary [DetermineModule]
+    'b. calculate how much delay is needed for each module[DetermineModule], but use only the largest one[WaitStatement].
+    'c. send individual data, clocks, and latch commands that are necessary for[CommandOrigCB]
+      'or for SLIM, use [CommandAllSlims] for commanding concurrently 'ver111-31c
+    if suppressHardware=0 then 'ver115-6c
+        gosub [DetermineModule] 'determine which, if any, module needs commanding.  ver111-27
+        cmdneeded = glitchp1 + glitchd1 + glitchp3 + glitchd3 + glitchpdm 'ver111-38a
+        if cmdneeded > 0 and cb = 0 then gosub [CommandOrigCB]'old Control (150 usec, 0 SW) 'ver111-28ver111-38a
+        'if cb = 1 then gosub [CommandRevB]'old Control looking like SLIM  'not created yet
+        if cmdneeded > 0 and cb = 2 then gosub [CommandAllSlims]'ver111-38a
+        if cmdneeded > 0 and cb = 3 then gosub [CommandAllSlimsUSB] 'USB:01-08-2010
+        if cftest=1 then gosub [CommandLO2forCavTest] 'cav ver116-4c
+    end if
+return
+
+
+[CreateRcounter]'needed:reference,appxpdf ; creates:rcounter,pdf 'ver111-4
+    rcounter = int(reference/appxpdf) 'ver111-4
+    if (reference/appxpdf) - rcounter >= .5 then rcounter = rcounter + 1   'rounds off rcounter 'ver111-4
+    pdf = reference/rcounter 'ver111-4
+    return 'to (Initialize PLL 3),[InitializePLL2],or[InitializePLL1]with rcounter,pdf 'ver111-4
+
+[CommandPLL1R]'needed:rcounter1,PLL1mode,PLL1phasepolarity,SELT,PLL1
+    rcounter = rcounter1
+    preselector = 32 : if PLL1mode = 1 then preselector = 16
+    phasepolarity = PLL1phasepolarity    'inverting op amp is 0, non-inverting loop is 1
+    fractional = PLL1mode       '0 for Integer-N; 1 for Fractional-N
+    Jcontrol = SELT   'for PLL 1, on Control Board J1, the value is "3"
+    LEPLL = 4         'for PLL 1, on Control Board J1, the value is "4"
+    PLL = PLL1
+    gosub [CommandRBuffer]'needs:rcounter,preselector,phasepolarity,fractional,Jcontrol,LEPLL,PLL
+    if len(errora$)>0 then
+        error$ = "PLL 1, " + errora$
+        message$=error$ : call PrintMessage 'ver114-4e
+        call RequireRestart   'ver115-1c
+        wait
+    end if
+    return
+
+[CommandPLL2R]'needed:reference,appxpdf,PLL2phasepolarity,SELT,PLL2
+    preselector = 32
+    phasepolarity = PLL2phasepolarity    'inverting op amp is 0, non-inverting loop is 1
+    fractional = 0    '0 for Integer-N; PLL 2 should not be fractional due to increased noise
+    Jcontrol = SELT   'for PLL 2, on Control Board J2, the value is "3"
+    LEPLL = 8          'for PLL 2, on Control Board J2, the value is "8"
+    PLL = PLL2
+    gosub [CommandRBuffer]'needs:rcounter,preselector,phasepolarity,fractional,Jcontrol,LEPLL,PLL
+    if len(errora$)>0 then
+        error$ = "PLL 2, " + errora$
+        message$=error$ : call PrintMessage 'ver114-4e
+        call RequireRestart   'ver115-1c
+        wait
+    end if
+    return 'to 'CommandPLL2R and Init Buffers
+
+[CommandPLL3R]'needed:PLL3mode,PLL3phasepolarity,INIT,PLL3
+    preselector = 32 : if PLL3mode = 1 then preselector = 16
+    phasepolarity = PLL3phasepolarity    'inverting op amp is 0, non-inverting loop is 1
+    fractional = PLL3mode       '0 for Integer-N; 1 for Fractional-N
+    Jcontrol = INIT   'for Tracking Gen PLL, on Control Board J3, the value is "15"
+    LEPLL = 16         'for Tracking Gen PLL, on Control Board J3, the value is "16"
+    PLL = PLL3
+    gosub [CommandRBuffer]'needs:rcounter,preselector,phasepolarity,fractional,Jcontrol,LEPLL,PLL
+    if len(errora$)>0 then
+        error$ = "PLL 3, " + errora$
+        message$=error$ : call PrintMessage 'ver114-4e
+        call RequireRestart   'ver115-1c
+        wait
+    end if
+    return 'to 'CommandPLL3R and Init Buffers
+
+[CommandRBuffer]'needed:rcounter,preselector,phasepolarity,fractional,Jcontrol,LEPLL,PLL
+    if PLL = 2325 then gosub [Command2325R]'needs:rcounter,preselector,Jcontrol,port,LEPLL,contclear ; commands LMX2325 rcounter and registers
+    if PLL = 2326 then gosub [Command2326R]'needs:rcounter,phasepolarity,Jcontrol,port,LEPLL,contclear ; commands LMX2326 rcounter and registers
+    if PLL = 2350 then gosub [Command2350R]'needs:rcounter,phasepolarity,Jcontrol,port,LEPLL,contclear,fractional ; commands LMX2350 rcounter
+    if PLL = 2353 then gosub [Command2353R]'needs:rcounter,phasepolarity,Jcontrol,port,LEPLL,contclear,fractional ; commands LMX2353 rcounter
+    if PLL = 4112 then gosub [Command4112R]'needs:rcounter,preselector,phasepolarity,Jcontrol,port,LEPLL,contclear ; commands AD4112 rcounter
+    return
+
+[CreateIntegerNcounter]'needed:appxVCO,reference,rcounter ; creates:ncount,ncounter,fcounter(0),pdf
+    ncount = appxVCO/(reference/rcounter)  'approximates the Ncounter for PLL
+    ncounter = int(ncount)     'approximates the ncounter for PLL
+    if ncount - ncounter >= .5 then ncounter = ncounter + 1   'rounds off ncounter
+    fcounter = 0
+    pdf = appxVCO/ncounter        'actual phase freq of PLL
+    return  'to 'CreatePLL2N,'[CalculateThisStepPLL1],or '[CalculateThisStepPLL3] with ncount, ncounter and fcounter(=0)
+
+[CreateFractionalNcounter]'needed:appxVCO,reference,rcounter ; creates:ncount,ncounter,fcounter,pdf
+    ncount = appxVCO/(reference/rcounter)  'approximates the Ncounter for PLL
+    ncounter = int(ncount)    'actual value for PLL Ncounter
+    fcount = ncount - ncounter
+    fcounter = int(fcount*16) 'ver111
+    if (fcount*16) - fcounter >= .5 then fcounter = fcounter + 1 'rounds off fcounter  ver111
+    if fcounter = 16 then ncounter = ncounter + 1:fcounter = 0
+    pdf = appxVCO/(ncounter + (fcounter/16)) 'actual phase freq for PLL 'ver111-10
+    return  'with ncount,ncounter,fcounter,pdf
+[AutoSpur]'needed:LO1,LO2,finalfreq,appxdds1,dds1output,rcounter1,finalbw,fcounter,ncounter,spurcheck;changes pdf,dds1output
+    '[AutoSpur] is a continuation of [CreateFractionalNcounter], used only in MSA when PLL 1 is Fractional
+    spur = 0    'reset spur, and determine if there is potential for a spur
+    firstif = LO2 - finalfreq
+    fractionalfreq = dds1output/(rcounter1*16)
+    harnonicb = int(firstif/fractionalfreq)
+    if (firstif/fractionalfreq)-harnonicb >=.5 then harnonicb = harnonicb + 1  'rev108
+    harnonica = harnonicb - 1
+    harnonicc = harnonicb + 1
+    firstiflow = LO2 - (finalfreq + finalbw/1000)
+    firstifhigh = LO2 - (finalfreq - finalbw/1000)
+    if harnonica*fractionalfreq > firstiflow and harnonica*fractionalfreq < firstifhigh then spur = 1
+    if harnonicb*fractionalfreq > firstiflow and harnonicb*fractionalfreq < firstifhigh then spur = 1
+    if harnonicc*fractionalfreq > firstiflow and harnonicc*fractionalfreq < firstifhigh then spur = 1
+    if spur = 1 and (dds1output<appxdds1) then fcounter = fcounter - 1
+    if spur = 1 and (dds1output>appxdds1) then fcounter = fcounter + 1
+    if fcounter = 16 then ncounter = ncounter + 1:fcounter = 0  'rev108
+    if fcounter <0 then ncounter = ncounter - 1:fcounter = 15  'rev108
+    pdf = LO1/(ncounter + (fcounter/16))
+    dds1output = pdf * rcounter1    'actual output of DDS1(input Ref to PLL1)
+    return 'with possibly new ncounter,fcounter,pdf,dds1output
+[ManSpur]'needed:spurcheck,dds1output,appxdds1,fcounter,ncounter
+    '[ManSpur] is a continuation of [CreateFractionalNcounter], used only in MSA when PLL 1 is Fractional
+    if spurcheck = 1 and (dds1output<appxdds1) then fcounter = fcounter - 1 'causes +shift in pdf1
+    if spurcheck = 1 and (dds1output>appxdds1) then fcounter = fcounter + 1 'causes -shift in pdf1
+    if fcounter = 16 then ncounter = ncounter + 1:fcounter = 0  'rev108
+    if fcounter < 0 then ncounter = ncounter - 1:fcounter = 15  'rev108
+    pdf = LO1/(ncounter + (fcounter/16))
+    dds1output = pdf * rcounter1    'actual output of DDS1(input Ref to PLL1)
+    return 'with possibly new:ncounter,fcounter,pdf,dds1output
+
+[CreatePLL1N]'needed:ncounter,fcounter,PLL1mode,PLL1
+    preselector = 32 : if PLL1mode = 1 then preselector = 16
+    PLL = PLL1
+    gosub [CreateNBuffer]'needs:ncounter,fcounter,PLL,preselector;creates:Bcounter,Acounter, and N Bits N0-Nx
+    if len(errora$)>0 then
+        error$ = "PLL 1, " + errora$
+        message$=error$ : call PrintMessage 'ver114-4e
+        call RequireRestart   'ver115-1c
+        wait
+    end if
+    Bcounter1=Bcounter: Acounter1=Acounter
+    return 'returns with Bcounter1,Acounter1,N0thruNx
+
+[CreatePLL2N]'needed:ncounter,fcounter,PLL2
+    preselector = 32
+    PLL = PLL2
+    gosub [CreateNBuffer]'needs:ncounter,fcounter,PLL,preselector;creates:Bcounter,Acounter, and N Bits N0-Nx
+    if len(errora$)>0 then
+        error$ = "PLL 2, " + errora$
+        message$=error$ : call PrintMessage 'ver114-4e
+        call RequireRestart   'ver115-1c
+        wait
+    end if
+    return 'to 'CreatePLL2N
+
+[CreatePLL3N]'needed:ncounter,fcounter,PLL3mode,PLL3  ver111-14
+    preselector = 32 : if PLL3mode = 1 then preselector = 16
+    PLL = PLL3
+    gosub [CreateNBuffer]'needs:ncounter,fcounter,PLL,preselector;creates:Bcounter,Acounter, and N Bits N0-Nx
+    if len(errora$)>0 then
+        error$ = "PLL 3, " + errora$
+        message$=error$ : call PrintMessage 'ver114-4e
+        call RequireRestart   'ver115-1c
+        wait
+    end if
+    Bcounter3=Bcounter: Acounter3=Acounter
+    return 'returns with Bcounter3,Acounter3,N0thruNx
+
+[CreateNBuffer]'needed:PLL,ncounter,fcounter,preselector
+    if PLL = 2325 then gosub [Create2325N]'needs:ncounter,preselector; creates LMX2325 N Buffer ver111
+    if PLL = 2326 then gosub [Create2326N]'needs:ncounter ; creates LMX2326 N Buffer ver111
+    if PLL = 2350 then gosub [Create2350N]'needs:ncounter,preselector,fcounter; creates LMX2350 RFN Buffer ver111
+    if PLL = 2353 then gosub [Create2353N]'needs: ncounter,preselector,fcounter; creates LMX2353 N Buffer ver111
+    if PLL = 4112 then gosub [Create4112N]'needs:ncounter,preselector; creates AD4112 N Buffer ver111
+    return 'with Bcounter,Acounter, and N Bits N0-N23
+
+[Command2325R]'needed:rcounter,preselector,control,Jcontrol,port,LEPLL,contclear ; commands LMX2325 rcounter and registers
+    if rcounter <3 then beep:errora$ = "2325 Rcounter is < 3":return 'with errora$ ver111-37c
+    'ver116-4o deleted "if" block, per Lrev1
+    N0 = 1           'address bit, 0 sets the N Buffer, 1 is for R Buffer
+    rc1 = int(rcounter/2):N1 = rcounter - 2*rc1 'binary conversion from decimal
+    rc2 = int(rc1/2):N2 = rc1 - 2*rc2
+    rc3 = int(rc2/2):N3 = rc2 - 2*rc3
+    rc4 = int(rc3/2):N4 = rc3 - 2*rc4
+    rc5 = int(rc4/2):N5 = rc4 - 2*rc5
+    rc6 = int(rc5/2):N6 = rc5 - 2*rc6
+    rc7 = int(rc6/2):N7 = rc6 - 2*rc7
+    rc8 = int(rc7/2):N8 = rc7 - 2*rc8
+    rc9 = int(rc8/2):N9 = rc8 - 2*rc9
+    rc10 = int(rc9/2):N10 = rc9 - 2*rc10
+    rc11 = int(rc10/2):N11 = rc10 - 2*rc11
+    rc12 = int(rc11/2):N12 = rc11 - 2*rc12
+    rc13 = int(rc12/2):N13 = rc12 - 2*rc13
+    rc14 = int(rc13/2):N14 = rc13 - 2*rc14
+    N15 = 1: if preselector = 64 then N15 = 0   'sets preselector divide ratio, 1=32, 0=64
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev1
+    gosub [CommandPLL]'needs:N23-N0,control,Jcontrol,port,contclear,LEPLL ; commands N23-N0,old ControlBoard ver111
+    return
+
+[Create2325N]'needed:ncounter,preselector; creates LMX2325 n buffer
+    Bcounter = int(ncounter/preselector)
+    Acounter = ncounter- (Bcounter * preselector)
+    if Bcounter<3 then beep:errora$ = "2325 Bcounter < 3":return 'with errora$ ver111-37c
+    if Bcounter>2047 then beep:errora$ = "2325 Bcounter > 2047":return 'with errora$ ver111-37c
+    if Bcounter<Acounter then beep:errora$ = "2325 Bcounter<Acounter":return 'with errora$ ver111-37c
+    'ver116-4o deleted "if" block, per Lrev1
+    N0 = 0    'address bit, 0 sets the N Buffer, 1 is for R Buffer
+    na1 = int(Acounter/2):N1 = Acounter - 2*na1 'binary conversion from decimal
+    na2 = int(na1/2):N2 = na1 - 2*na2
+    na3 = int(na2/2):N3 = na2 - 2*na3
+    na4 = int(na3/2):N4 = na3 - 2*na4
+    na5 = int(na4/2):N5 = na4 - 2*na5
+    na6 = int(na5/2):N6 = na5 - 2*na6
+    na7 = int(na6/2):N7 = na6 - 2*na7
+    nb8 = int(Bcounter/2):N8 = Bcounter - 2*nb8
+    nb9 = int(nb8/2):N9 = nb8 - 2*nb9
+    nb10 = int(nb9/2):N10 = nb9 - 2*nb10
+    nb11 = int(nb10/2):N11 = nb10 - 2*nb11
+    nb12 = int(nb11/2):N12 = nb11 - 2*nb12
+    nb13 = int(nb12/2):N13 = nb12 - 2*nb13
+    nb14 = int(nb13/2):N14 = nb13 - 2*nb14
+    nb15 = int(nb14/2):N15 = nb14 - 2*nb15
+    nb16 = int(nb15/2):N16 = nb15 - 2*nb16
+    nb17 = int(nb16/2):N17 = nb16 - 2*nb17
+    nb18 = int(nb17/2):N18 = nb17 - 2*nb18
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev1
+    return
+
+[Command2326R]'needed:rcounter,phasepolarity,control,Jcontrol,port,LEPLL,contclear ; commands LMX2326 rcounter and registers
+    '[Create2326InitBuffer]'need phasepolarity
+    'ver116-4o deleted "if" block, per Lrev1
+    N20=0     'Test, use 0
+    N19=0     '1=Power Down Mode, use 0
+    N18=0     'Test, use 0
+    N17=0     'Test, use 0
+    N16=0     'Test, use 0
+    N15=0     'Fastlock Time out value, use 0
+    N14=0     'Fastlock Time out value, use 0
+    N13=0     'Fastlock Time out value, use 0
+    N12=0     'Fastlock Time out value, use 0
+    N11=0     '1=Time out enable, use 0
+    N10=0     'Fastlock control, use 0
+    N9=0     '1=Fastlock enable, use 0
+    N8=0     '1=Tristate the phase det output, use 0
+    N7 = phasepolarity     'Phase det polarity, 1=pos  0=neg
+    N6=0        'FoLD control(pin14 output), 0= tristate, 1= R Divider out
+    N5=0        '2= N Divider out, 3= Serial Data Output, 4= Digital Lock Detect
+    N4=0        '5= Open drain lock detect, 6= High output, 7= Low output
+    N3=0        '1= Power Down, use 0
+    N2=0        '1= Counter Reset Enable, allows reset of R,N counters,use 0
+    N1=1        'F1 address bit 1, must be 1
+    N0=1        'F1 address bit 0, must be 1
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 ''ver116-4o per Lrev1
+  '[Command2326InitBuffer]'need Jcontrol,LEPLL,contclear
+    gosub [CommandPLL]'needs:N23-N0,control,Jcontrol,port,contclear,LEPLL ; commands N23-N0,old ControlBoard ver111
+  '[Create2326Rbuffer]'need rcounter
+    if rcounter <3 then beep:errora$="2326 R counter <3":return 'with errora$ ver111-37c
+    if rcounter >16383 then beep:errora$="2326 R counter >16383":return 'with errora$ ver111-37c
+    'ver116-4o deleted "if" block, per Lrev1
+    N0 = 0                   'R address bit 0, must be 0
+    N1 = 0                   'R address vit 1, must be 0
+    ra0 = int(rcounter/2):N2 = rcounter- 2*ra0    'LSB
+    ra1 = int(ra0/2):N3 = ra0- 2*ra1
+    ra2 = int(ra1/2):N4 = ra1- 2*ra2
+    ra3 = int(ra2/2):N5 = ra2- 2*ra3
+    ra4 = int(ra3/2):N6 = ra3- 2*ra4
+    ra5 = int(ra4/2):N7 = ra4- 2*ra5
+    ra6 = int(ra5/2):N8 = ra5- 2*ra6
+    ra7 = int(ra6/2):N9 = ra6- 2*ra7
+    ra8 = int(ra7/2):N10 = ra7- 2*ra8
+    ra9 = int(ra8/2):N11 = ra8- 2*ra9
+    ra10 = int(ra9/2):N12 = ra9- 2*ra10
+    ra11 = int(ra10/2):N13 = ra10- 2*ra11
+    ra12 = int(ra11/2):N14 = ra11- 2*ra12
+    ra13 = int(ra12/2):N15 = ra12- 2*ra13  'MSB
+    N16 = 0     'Test Bit
+    N17 = 0     'Test Bit
+    N18 = 0     'Test Bit
+    N19 = 0     'Test Bit
+    N20 = 0     'Lock Detector Mode, 0=3 refcycles, 1=5 cycles
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev1
+  '[Command2326Rbuffer]'need Jcontrol,LEPLL,contclear
+    gosub [CommandPLL]'needs:N23-N0,control,Jcontrol,port,contclear,LEPLL ; commands N23-N0,old ControlBoard ver111
+    return
+
+[Create2326N]'needed:ncounter ; creates LMX2326 n buffer  ver111
+    Bcounter = int(ncounter/32)
+    Acounter = int(ncounter-(Bcounter*32))
+    if Bcounter < 3 then beep:errora$="2326 Bcounter <3":return 'with errora$ ver111-37c
+    if Bcounter > 8191 then beep:errora$="2326 Bcounter >8191":return 'with errora$ ver111-37c
+    if Bcounter < Acounter then beep:errora$="2326 Bcounter<Acounter":return 'with errora$ ver111-37c
+    'ver116-4o deleted "if" block, per Lrev1
+    N0 = 1       'n address bit 0, must be 1
+    N1 = 0       'n address bit 1, must be 0
+    na0 = int(Acounter/2):N2 = Acounter- 2*na0      'Acounter bit 0 LSB
+    na1 = int(na0/2):N3 = na0 - 2*na1
+    na2 = int(na1/2):N4 = na1 - 2*na2
+    na3 = int(na2/2):N5 = na2 - 2*na3
+    na4 = int(na3/2):N6 = na3 - 2*na4               'Acounter bit 4 MSB
+    nb0 = int(Bcounter/2):N7 = Bcounter- 2*nb0      'Bcounter bit 0 LSB
+    nb1 = int(nb0/2):N8 = nb0 - 2*nb1
+    nb2 = int(nb1/2):N9 = nb1 - 2*nb2
+    nb3 = int(nb2/2):N10 = nb2 - 2*nb3
+    nb4 = int(nb3/2):N11 = nb3 - 2*nb4
+    nb5 = int(nb4/2):N12 = nb4 - 2*nb5
+    nb6 = int(nb5/2):N13 = nb5 - 2*nb6
+    nb7 = int(nb6/2):N14 = nb6 - 2*nb7
+    nb8 = int(nb7/2):N15 = nb7 - 2*nb8
+    nb9 = int(nb8/2):N16 = nb8 - 2*nb9
+    nb10 = int(nb9/2):N17 = nb9 - 2*nb10
+    nb11 = int(nb10/2):N18 = nb10 - 2*nb11
+    nb12 = int(nb11/2):N19 = nb11 - 2*nb12          'Bcounter bit 12 MSB
+    N20 = 1    'Phase Det Current, 1= 1 ma, 0= 250 ua
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev1
+    return
+
+[Command2350R]'needed: rcounter,phasepolarity,control,Jcontrol,port,LEPLL,contclear,fractional ; commands LMX2350 rcounter
+    '[CreateIFRbuffer2350]'needed:nothing,since IF section is turned off
+    'ver116-4o deleted "if" block, per Lrev1
+    N23=0     'osc. 0=separate
+    N22=1     'Modulo F, 1=16 0=15
+    N21=1     'ifr21-ifr19 is FO/LD, 3 Bits (0-7), MSB, 0=IF/RF alogLockDet(open drain)
+    N20=1     '1=IF digLockDet, 2=RF digLockDet, 3=IF/RF digLockDet
+    N19=1     '4=IF Rcntr, 5=IF Ncntr, 6=RF Rcntr, 7=RF Ncntr, LSB
+    N18=0     'IF charge pump, 0=100ua  1=800ua
+    N17=1     'IF polarity 1=positive phase action
+    N16=0     'IFR counter IF section 15 Bits, MSB 14
+    N15=0     'IFRcounter Bit 13
+    N14=0     'IFRcounter Bit 12
+    N13=0     'IFRcounter Bit 11
+    N12=1     'IFRcounter Bit 10
+    N11=1     'IFRcounter Bit 9
+    N10=1     'IFRcounter Bit 8
+    N9=1      'IFRcounter Bit 7
+    N8=0      'IFRcounter Bit 6
+    N7=1      'IFRcounter Bit 5
+    N6=1      'IFRcounter Bit 4
+    N5=0      'IFRcounter Bit 3
+    N4=0      'IFRcounter Bit 2
+    N3=0      'IFRcounter Bit 1
+    N2=0      'IFR counter, IF section 15 Bits, LSB 0
+    N1=0      '2350 IF_R register, 2 bits, must be 0
+    N0=0      '2350 IF_R register, 2 bits, must be 0
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev1
+  '[CommandIFRbuffer2350]
+    gosub [CommandPLL]'needs:N23-N0,control,Jcontrol,port,contclear,LEPLL ; commands N23-N0,old ControlBoard ver111
+  '[CreateIFNbuffer2350]'needed:nothing,since IF section is turned off(N22=1)
+    'ver116-4o deleted "if" block, per Lrev1
+    N23=0     'IF counter reset, 0=normal operation
+    N22=1     'Power down mode for IF section, 1=powered down, 0=powered up
+    N21=0     'PWN Mode,  0=async  1=syncro
+    N20=0     'Fastlock, 0=CMOS outputs enabled 1= fastlock mode
+    N19=0     'test bit, leave at 0
+    N18=1     'OUT 0,  1
+    N17=0     'OUT 1,  0
+    N16=0     'IF N Bcounter 12 Bits MSB bit 11
+    N15=0     'IF N Bcounter, bit 10, '512 = 0010 0000 0000
+    N14=1     'IF N Bcounter, bit 9
+    N13=0     'IF N Bcounter, bit 8
+    N12=0     'IF N Bcounter, bit 7
+    N11=0     'IF N Bcounter, bit 6
+    N10=0     'IF N Bcounter, bit 5
+    N9=0      'IF N Bcounter, bit 4
+    N8=0      'IF N Bcounter, bit 3
+    N7=0      'IF N Bcounter, bit 2
+    N6=0      'IF N Bcounter, bit 1
+    N5=0      'IF N Bcounter, 12 Bits, LSB bit 0
+    N4=0      'bit 2, IF N Acounter 3 Bits MSB
+    N3=0      'bit 1, 0 = 000 thru 7 = 111
+    N2=0      'bit 0, IF N Acounter 3 Bits LSB
+    N1=0      '2350 IF_N register, 2 bits, must be 0
+    N0=1      '2350 IF_N register, 2 bits, must be 1
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev1
+  '[CommandIFNbuffer2350]
+    gosub [CommandPLL]'needs:N23-N0,control,Jcontrol,port,contclear,LEPLL ; commands N23-N0,old ControlBoard ver111
+  '[CreateRFRbuffer2350]needed:rcounter,phasepolarity,fractional
+    if rcounter < 3 then beep:errora$="2350 Rcounter <3":return 'with errora$ ver111-37c
+    if rcounter > 32767 then beep:errora$="2350 Rcounter >32767":return 'with errora$ ver111-37c
+    'ver116-4o deleted "if" block, per Lrev1
+    N0=0      '2350 RF_R register, 2 bits, must be 0
+    N1=1      '2350 RF_R register, 2 bits, must be 1
+    rfra2 = int(rcounter/2):N2 = rcounter- 2*rfra2
+    rfra3 = int(rfra2/2):N3 = rfra2- 2*rfra3
+    rfra4 = int(rfra3/2):N4 = rfra3- 2*rfra4
+    rfra5 = int(rfra4/2):N5 = rfra4- 2*rfra5
+    rfra6 = int(rfra5/2):N6 = rfra5- 2*rfra6
+    rfra7 = int(rfra6/2):N7 = rfra6- 2*rfra7
+    rfra8 = int(rfra7/2):N8 = rfra7- 2*rfra8
+    rfra9 = int(rfra8/2):N9 = rfra8- 2*rfra9
+    rfra10 = int(rfra9/2):N10 = rfra9- 2*rfra10
+    rfra11 = int(rfra10/2):N11 = rfra10- 2*rfra11
+    rfra12 = int(rfra11/2):N12 = rfra11- 2*rfra12
+    rfra13 = int(rfra12/2):N13 = rfra12- 2*rfra13
+    rfra14 = int(rfra13/2):N14 = rfra13- 2*rfra14
+    rfra15 = int(rfra14/2):N15 = rfra14- 2*rfra15
+    rfra16 = int(rfra15/2):N16 = rfra15- 2*rfra16
+    N17 = phasepolarity     'RF phase polarity,  1=positive action, 0=inverted action
+    N18=1     'LSB of RF charge pump sel, 4 Bits, 16 levels, 100ua/level
+    N19=1     'total current = (100ua * bit value)+100ua
+    N20=1     '100ua to 1600ua: ie, 800ua = 0111, 1600ua = 1111
+    N21=1     'MSB of RF charge pump sel, 4 Bits 100ua/bit
+    N22=0     'V2 enable voltage doubler =1   0=norm Vcc
+    N23 = fractional   'DLL mode, delay line cal, 0=slow  1=fast,fractional mode
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 ''ver116-4o per Lrev1
+    '[CommandRFRbuffer2350]
+    gosub [CommandPLL]'needs:N23-N0,control,Jcontrol,port,contclear,LEPLL ; commands N23-N0,old ControlBoard ver111
+    return
+
+[Create2350N]'needed: ncounter,preselector,fcounter; creates LMX2350 RFN Buffer
+    Bcounter = int(ncounter/preselector)
+    Acounter = int(ncounter-(Bcounter*preselector))
+    if Bcounter < 3 then beep:errora$="2350 Bcounter <3":return 'with errora$ ver111-37c
+    if Bcounter > 1023 then beep:errora$="2350 Bcounter >1023":return 'with errora$ ver111-37c
+    if Bcounter < Acounter + 2 then beep:errora$="2350 Bcounter<Acounter+2":return 'with errora$ ver111-37c
+    'ver116-4o deleted "if" block, per Lrev1
+    N0=1      '2350 RF_N register, must be 1
+    N1=1      '2350 RF_N register, must be 1 'was N=1 ver113-7a
+    f0 = int(fcounter/2):N2 = fcounter - 2*f0      'fcounter bit 0
+    f1 = int(f0/2):N3 = f0 - 2*f1       'fcounter bit 1
+    f2 = int(f1/2):N4 = f1 - 2*f2       'fcounter bit 2
+    f3 = int(f2/2):N5 = f2 - 2*f3       'fcounter bit 3 (0 to 15)
+    rfna6 = int(Acounter/2):N6 = Acounter- 2*rfna6
+    rfna7 = int(rfna6/2):N7 = rfna6 - 2*rfna7
+    rfna8 = int(rfna7/2):N8 = rfna7 - 2*rfna8
+    rfna9 = int(rfna8/2):N9 = rfna8 - 2*rfna9
+    rfna10 = int(rfna9/2):N10 = rfna9 - 2*rfna10
+    rfnb11 = int(Bcounter/2):N11 = Bcounter- 2*rfnb11
+    rfnb12 = int(rfnb11/2):N12 = rfnb11 - 2*rfnb12
+    rfnb13 = int(rfnb12/2):N13 = rfnb12 - 2*rfnb13
+    rfnb14 = int(rfnb13/2):N14 = rfnb13 - 2*rfnb14
+    rfnb15 = int(rfnb14/2):N15 = rfnb14 - 2*rfnb15
+    rfnb16 = int(rfnb15/2):N16 = rfnb15 - 2*rfnb16
+    rfnb17 = int(rfnb16/2):N17 = rfnb16 - 2*rfnb17  'was rgb17 ver113-7a
+    rfnb18 = int(rfnb17/2):N18 = rfnb17 - 2*rfnb18
+    rfnb19 = int(rfnb18/2):N19 = rfnb18 - 2*rfnb19
+    rfnb20 = int(rfnb19/2):N20 = rfnb19 - 2*rfnb20
+    N21=0 :if preselector = 32 then N21 = 1  '0=16/17  1=32/33
+    N22=0     'Pwr down RF,    0=normal  1=pwr down
+    N23=0     'RF cntr reset,  0=normal  1=reset
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev1
+    return
+
+[Command2353R]'needed: rcounter,phasepolarity,control,Jcontrol,port,LEPLL,contclear,fractional ; commands LMX2353 rcounter
+  '[Create2353F1Buffer]'globals reqd, none
+    'ver116-4o deleted "if" block, per Lrev1
+    N23=0
+    N22=1     'divider, 1=16 0=15
+    N21=0     'FO/LD output selection, 3 Bits 0-7 MSB
+    N20=0     '0=alog lock det, 2=dig lock det
+    N19=0     '6=Ndivider output, 7=Rdivider output
+    N18=0:N17=0:N16=0:N15=0:N14=0
+    N13=0:N12=0:N11=0:N10=0:N9=0
+    N8=0:N7=0:N6=0:N5=0:N4=0
+    N3=0:N2=0
+    N1=0        'F1 address bit 1
+    N0=0        'F1 address bit 0
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev11
+  '[Command2353F1Buffer]
+    gosub [CommandPLL]'needs:N23-N0,control,Jcontrol,port,contclear,LEPLL ; commands N23-N0,old ControlBoard ver111
+  '[Create2353F2Buffer]'globals reqd: none
+    'ver116-4o deleted "if" block, per Lrev1
+    N23=0:N22=0
+    N21=0     'Power Down Mode,  0=async  1=syncro
+    N20=0     'Fastlock, 0=CMOS outputs enabled 1= fastlock mode
+    N19=0     'test bit, leave at 0
+    N18=0     'OUT 1,  0
+    N17=0     'OUT 0,  0
+    N16=0:N15=0:N14=0:N13=0
+    N12=0:N11=0:N10=0:N9=0
+    N8=0:N7=0:N6=0:N5=0
+    N4=0:N3=0:N2=0
+    N1=0        'F2 address bit 1
+    N0=1        'F2 address bit 0
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev1
+  '[Command2353F2Buffer]
+    gosub [CommandPLL]'needs:N23-N0,control,Jcontrol,port,contclear,LEPLL ; commands N23-N0,old ControlBoard ver111
+  '[Create2353Rbuffer]'needed:rcounter,phasepolarity,fractional
+    if rcounter <3 then beep:errora$ = "2353 Rcounter is < 3":return 'with errora$ ver111-37c
+    if rcounter >32767 then beep:errora$ = "2353 Rcounter is > 32767":return 'with errora$ ver111-37c
+    'ver116-4o deleted "if" block, per Lrev1
+    N0 = 0                   'R address bit 0
+    N1 = 1                   'R address bit 1
+    ra0 = int(rcounter/2):N2 = rcounter- 2*ra0    'LSB R buffer
+    ra1 = int(ra0/2):N3 = ra0- 2*ra1:ra2 = int(ra1/2):N4 = ra1- 2*ra2
+    ra3 = int(ra2/2):N5 = ra2- 2*ra3:ra4 = int(ra3/2):N6 = ra3- 2*ra4
+    ra5 = int(ra4/2):N7 = ra4- 2*ra5:ra6 = int(ra5/2):N8 = ra5- 2*ra6
+    ra7 = int(ra6/2):N9 = ra6- 2*ra7:ra8 = int(ra7/2):N10 = ra7- 2*ra8
+    ra9 = int(ra8/2):N11 = ra8- 2*ra9:ra10 = int(ra9/2):N12 = ra9- 2*ra10
+    ra11 = int(ra10/2):N13 = ra10- 2*ra11:ra12 = int(ra11/2):N14 = ra11- 2*ra12
+    ra13 = int(ra12/2):N15 = ra12- 2*ra13:ra14 = int(ra13/2):N16 = ra13- 2*ra14    'MSB R buffer
+    N17 = phasepolarity     'phase detector polarity 1=normal,0=reverse for opamp
+    N18 = 1   'LSB of Charge pump control, 100ua x1 +100ua
+    N19 = 1          'Charge pump control, 100ua x2 +100ua
+    N20 = 1          'Charge pump control, 100ua x4 +100ua
+    N21 = 1   'MSB of Charge pump control, 100ua x8 +100ua
+    N22 = 0   'Charge Pump Voltage Doubler Enabled when 1
+    N23 = fractional 'Delay Line Loop Cal mode, set to 1 for fractional N
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev1
+  '[Cmd2353Rbuffer]
+    gosub [CommandPLL]'needs:N23-N0,control,Jcontrol,port,contclear,LEPLL ; commands N23-N0,old ControlBoard ver111
+    return
+
+[Create2353N]'needed: ncounter,preselector,fcounter; creates LMX2353 N Buffer
+    Bcounter = int(ncounter/preselector)
+    Acounter = int(ncounter-(Bcounter*preselector))
+    if Bcounter < 3 then beep:errora$ = "2353 Bcounter is < 3":return 'with errora$ ver111-37c
+    if Bcounter > 1023 then beep:errora$ = "2353 Bcounter is > 1023":return 'with errora$ ver111-37c
+    if Bcounter < Acounter + 2 then beep:errora$ = "2353 Bcounter < Acounter+2":return 'with errora$ ver111-37c
+    'ver116-4o deleted "if" block, per Lrev1
+    N0 = 1       'n address bit 0
+    N1 = 1       'n address bit 1
+    f0 = int(fcounter/2):N2 = fcounter - 2*f0       'fcounter bit 0
+    f1 = int(f0/2):N3 = f0 - 2*f1       'fcounter bit 1
+    f2 = int(f1/2):N4 = f1 - 2*f2       'fcounter bit 2
+    f3 = int(f2/2):N5 = f2 - 2*f3       'fcounter bit 3 (0 to 15)
+    na0 = int(Acounter/2):N6 = Acounter- 2*na0      'Acounter bit 0 LSB
+    na1 = int(na0/2):N7 = na0 - 2*na1
+    na2 = int(na1/2):N8 = na1 - 2*na2
+    na3 = int(na2/2):N9 = na2 - 2*na3
+    na4 = int(na3/2):N10 = na3 - 2*na4      'Acounter bit 4 MSB
+    nb0 = int(Bcounter/2):N11 = Bcounter- 2*nb0      'Bcounter bit 0 LSB
+    nb1 = int(nb0/2):N12 = nb0 - 2*nb1
+    nb2 = int(nb1/2):N13 = nb1 - 2*nb2
+    nb3 = int(nb2/2):N14 = nb2 - 2*nb3
+    nb4 = int(nb3/2):N15 = nb3 - 2*nb4
+    nb5 = int(nb4/2):N16 = nb4 - 2*nb5
+    nb6 = int(nb5/2):N17 = nb5 - 2*nb6
+    nb7 = int(nb6/2):N18 = nb6 - 2*nb7
+    nb8 = int(nb7/2):N19 = nb7 - 2*nb8
+    nb9 = int(nb8/2):N20 = nb8 - 2*nb9      'Bcounter bit 9 MSB
+    N21 = 0 :if preselector = 32 then N21 = 1  '0=16/17  1=32/33
+    N22 = 0          'power down if 1
+    N23 = 0          'counter reset if 1
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev1
+    return
+
+[Command4112R]'needed: rcounter,preselector,phasepolarity,control,Jcontrol,port,LEPLL,contclear ; commands AD4112 rcounter
+  '[Create4112InitBuffer]'needed:preselector,phasepolarity
+    'ver116-4o deleted "if" block, per Lrev1
+    N23=1     'N23,22 prescaler: 0=8, 1=16, 2=32, 3=64
+    N22=0     'preselector defaulted to 32
+    if preselector =8 then N23=0:N22=0
+    if preselector =16 then N23=0:N22=1
+    if preselector =64 then N23=1:N22=1
+    N21=0     'Power Down Mode, 0=async, 1=sync  use 0
+    N20=0     'N20,19,18 Phase Current for Set 2            '12-3-10
+    N19=0     'current= min current + min current*bit value '12-3-10
+    N18=1     'use bit value of 1 and 4.7 Kohm for 1.25 ma  '12-3-10
+    N17=0     'N17,16,15 Phase Current for Set 1            '12-3-10
+    N16=0     'current= min current + min current*bit value '12-3-10
+    N15=1     'use bit value of 1 and 4.7 Kohm for 1.25 ma  '12-3-10
+    N14=0     'N15,14,13,12 Fastlock Timer cycles
+    N13=0     '4 Bits, Cycles= 3 cycles + 4*bit value
+    N12=0     'Fastlock Time out value, use 0
+    N11=0     'use 4 bit value = 0
+    N10=0     '0=Fastlock Mode 1 (command), 1=Mode 2 (automatic)
+    N9=0     '1=Fastlock enabled, 0 =Fastlock Disabled
+    N8=0      '1=Tristate the phase det output, use 0
+    N7 = phasepolarity     'Phase det polarity, 1=pos  0=neg
+    N6=0      'FoLD control(pin14 output), 0= tristate, 1= Digital Lock Detect
+    N5=0      '2= N Divider out, 3= High output, 4= R Divider output
+    N4=0      '5= Open drain lock detect, 6= Serial Data output, 7= Low output
+    N3=0      'PD1, Power Down, 0=normal operation, 1=select power down mode
+    N2=0      '1= Counter Reset Enable, allows reset of R,N counters,use 0
+    N1=1      'F1 address bit 1, must be 1
+    N0=1      'F1 address bit 0, must be 1
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev1
+  '[Command4112InitBuffer]
+    gosub [CommandPLL]'needs:N23-N0,control,Jcontrol,port,contclear,LEPLL ; commands N23-N0,old ControlBoard ver111
+  '[Create4112Rbuffer]'needs:rcounter
+    if rcounter >16383 then beep:errora$="4112 R counter >16383":return 'with errora$ ver111-37c
+    'ver116-4o deleted "if" block, per Lrev1
+    N0 = 0                   'R address bit 0, must be 0
+    N1 = 0                   'R address vit 1, must be 0
+    ra0 = int(rcounter/2):N2 = rcounter- 2*ra0    'LSB R0
+    ra1 = int(ra0/2):N3 = ra0- 2*ra1
+    ra2 = int(ra1/2):N4 = ra1- 2*ra2
+    ra3 = int(ra2/2):N5 = ra2- 2*ra3
+    ra4 = int(ra3/2):N6 = ra3- 2*ra4
+    ra5 = int(ra4/2):N7 = ra4- 2*ra5
+    ra6 = int(ra5/2):N8 = ra5- 2*ra6
+    ra7 = int(ra6/2):N9 = ra6- 2*ra7
+    ra8 = int(ra7/2):N10 = ra7- 2*ra8
+    ra9 = int(ra8/2):N11 = ra8- 2*ra9
+    ra10 = int(ra9/2):N12 = ra9- 2*ra10
+    ra11 = int(ra10/2):N13 = ra10- 2*ra11
+    ra12 = int(ra11/2):N14 = ra11- 2*ra12
+    ra13 = int(ra12/2):N15 = ra12- 2*ra13  'MSB
+    N16 = 0     'N17,16  Antibacklash width
+    N17 = 0     '0=3ns, 1=1.5ns, 2=6ns, 3=3ns
+    N18 = 0     'Test Bit, use 0
+    N19 = 0     'Test Bit, use 0
+    N20 = 0     'Lock Detector Mode, 0=3 refcycles, 1=5 cycles
+    N21 = 0     'resyncronization enable 0=normal, 1=resync prescaler
+    N22 = 1     '0=resync with nondelayed rf input, 1=resync with delayed rf
+    N23 = 0   'reserved, use 0
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev1
+  '[Command4112Rbuffer]
+    gosub [CommandPLL]'needs:N23-N0,control,Jcontrol,port,contclear,LEPLL ; commands N23-N0,old ControlBoard ver111
+    return
+  '[endCommand4112R]
+
+[Create4112N]'needed: ncounter,preselector; creates AD4112 N Buffer
+    Bcounter = int(ncounter/preselector)
+    Acounter = int(ncounter-(Bcounter*preselector))
+    if Bcounter < 3 then beep:errora$="4112 N counter <3":return 'with errora$ ver111-37c
+    if Bcounter > 8191 then beep:errora$="4112 N counter >8191":return 'with errora$ ver111-37c
+    if Bcounter < Acounter then beep:errora$="4112 B counter<Acounter":return 'with errora$ ver111-37c
+    'ver116-4o deleted "if" block, per Lrev1
+    N0 = 1       'N address bit 0, must be 1
+    N1 = 0       'N address bit 1, must be 0
+    na0 = int(Acounter/2):N2 = Acounter- 2*na0      'Acounter bit 0 LSB
+    na1 = int(na0/2):N3 = na0 - 2*na1
+    na2 = int(na1/2):N4 = na1 - 2*na2
+    na3 = int(na2/2):N5 = na2 - 2*na3
+    na4 = int(na3/2):N6 = na3 - 2*na4
+    na5 = int(na4/2):N7 = na4 - 2*na5      'Acounter bit 5 MSB
+    nb0 = int(Bcounter/2):N8 = Bcounter- 2*nb0      'Bcounter bit 0 LSB
+    nb1 = int(nb0/2):N9 = nb0 - 2*nb1
+    nb2 = int(nb1/2):N10 = nb1 - 2*nb2
+    nb3 = int(nb2/2):N11 = nb2 - 2*nb3
+    nb4 = int(nb3/2):N12 = nb3 - 2*nb4
+    nb5 = int(nb4/2):N13 = nb4 - 2*nb5
+    nb6 = int(nb5/2):N14 = nb5 - 2*nb6
+    nb7 = int(nb6/2):N15 = nb6 - 2*nb7
+    nb8 = int(nb7/2):N16 = nb7 - 2*nb8
+    nb9 = int(nb8/2):N17 = nb8 - 2*nb9
+    nb10 = int(nb9/2):N18 = nb9 - 2*nb10
+    nb11 = int(nb10/2):N19 = nb10 - 2*nb11
+    nb12 = int(nb11/2):N20 = nb11 - 2*nb12      'Bcounter bit 12 MSB
+    N21 = 0    '0=ChargePump setting 1, 1=setting 2
+    N22 = 0     'reserved
+    N23 = 0     'reserved
+    if cb = 3 then Int64N.lsLong.struct = 2^23*N23+ 2^22*N22+ 2^21*N21+ 2^20*N20+ 2^19*N19+ 2^18*N18+ 2^17*N17+ 2^16*N16+ 2^15*N15+_
+            2^14*N14+ 2^13*N13+ 2^12*N12+ 2^11*N11+ 2^10*N10+ 2^9*N9+ 2^8*N8+_
+            2^7*N7+ 2^6*N6+ 2^5*N5+ 2^4*N4+ 2^3*N3+ 2^2*N2+ 2^1*N1+ 2^0*N0 'ver116-4o per Lrev1
+    if cb = 3 then Int64N.msLong.struct = 0 'ver116-4o per Lrev1
+    return
+
+[CreateBaseForDDSarray]'needed:ddsoutput,ddsclock ; creates: base,sw0thrusw30,w0thruw4
+    'the formula for the frequency output of the DDS(AD9850, 9851, or any 32 bit DDS) is:
+    'ddsoutput = base*ddsclock/2^32, where "base" is the decimal equivalent of command words
+    'to find "base": first, use: fullbase = (ddsoutput*2^32/ddsclock)
+        fullbase=(ddsoutput*2^32/ddsclock) 'decimal number, including fraction
+    'then, round it off to the nearest whole bit
+            '(the following has a problem) 11-03-08
+            'if ddsoutput is greater than ddsclock/2, the program will error out. I don't know why but
+                'halt and create an error message
+    if ddsoutput >= ddsclock/2 then
+        beep:message$="Error, ddsoutput > .5 ddsclock" : call PrintMessage :goto [Halted] 'ver114-4e
+    end if
+        base = int(fullbase) 'rounded down to whole number
+        if fullbase - base >= .5 then base = base + 1 'rounded to nearest whole number
+    'now, the actual ddsoutput can be determined by: ddsoutput = base*ddsclock/2^32
+  'Create Parallel Words 'needed:base
+        w0= 0 'a "1" here will activate the x4 internal multiplier, but not recommended
+        w1= int(base/2^24)  'w1 thru w4 converts decimal base code to 4 words, each are 8 bit binary
+        w2= int((base-(w1*2^24))/2^16)
+        w3= int((base-(w1*2^24)-(w2*2^16))/2^8)
+        w4= int(base-(w1*2^24)-(w2*2^16)-(w3*2^8))
+    if cb = 3 then 'USB:05/12/2010
+        Int64SW.msLong.struct = 0 'USB:05/12/2010
+        Int64SW.lsLong.struct = int( base ) 'USB:05/12/2010
+    else 'USB:05/12/2010
+        'Create Serial Bits'needed:base ; creates serial word bits; sw0 thru sw39
+        b0 = int(base/2):sw0 = base - 2*b0  'LSB, Freq-b0.  sw is serial word bit
+        b1 = int(b0/2):sw1 = b0 - 2*b1:b2 = int(b1/2):sw2 = b1 - 2*b2
+        b3 = int(b2/2):sw3 = b2 - 2*b3:b4 = int(b3/2):sw4 = b3 - 2*b4
+        b5 = int(b4/2):sw5 = b4 - 2*b5:b6 = int(b5/2):sw6 = b5 - 2*b6
+        b7 = int(b6/2):sw7 = b6 - 2*b7:b8 = int(b7/2):sw8 = b7 - 2*b8
+        b9 = int(b8/2):sw9 = b8 - 2*b9:b10 = int(b9/2):sw10 = b9 - 2*b10
+        b11 = int(b10/2):sw11 = b10 - 2*b11:b12 = int(b11/2):sw12 = b11 - 2*b12
+        b13 = int(b12/2):sw13 = b12 - 2*b13:b14 = int(b13/2):sw14 = b13 - 2*b14
+        b15 = int(b14/2):sw15 = b14 - 2*b15:b16 = int(b15/2):sw16 = b15 - 2*b16
+        b17 = int(b16/2):sw17 = b16 - 2*b17:b18 = int(b17/2):sw18 = b17 - 2*b18
+        b19 = int(b18/2):sw19 = b18 - 2*b19:b20 = int(b19/2):sw20 = b19 - 2*b20
+        b21 = int(b20/2):sw21 = b20 - 2*b21:b22 = int(b21/2):sw22 = b21 - 2*b22
+        b23 = int(b22/2):sw23 = b22 - 2*b23:b24 = int(b23/2):sw24 = b23 - 2*b24
+        b25 = int(b24/2):sw25 = b24 - 2*b25:b26 = int(b25/2):sw26 = b25 - 2*b26
+        b27 = int(b26/2):sw27 = b26 - 2*b27:b28 = int(b27/2):sw28 = b27 - 2*b28
+        b29 = int(b28/2):sw29 = b28 - 2*b29:b30 = int(b29/2):sw30 = b29 - 2*b30
+        b31 = int(b30/2):sw31 = b30 - 2*b31  'MSB, Freq-b31
+        sw32 = 0 'x4 multiplier, 1=enable, but not recommended
+        sw33 = 0 'control bit
+        sw34 = 0 'power down bit
+        sw35 = 0 'phase data
+        sw36 = 0 'phase data
+        sw37 = 0 'phase data
+        sw38 = 0 'phase data
+        sw39 = 0 'phase data
+    end if 'USB:05/12/2010
+    return
+'[endCreateBaseForDDSarray]
+
+[ResetDDS1par]'needed:control,STRBAUTO,contclear ; resets DDS1 on J5(OrigControlBd), into parallel mode
+    out control, STRBAUTO        'wclk and fqud lines high, causing DDS "Reset" line to go high
+    out control, contclear     'wclk and fqud lines low (all control lines low)
+    return
+
+[ResetDDS1ser]'OrigControlBoard.needed:AUTO,STRB,STRBAUTO ; set DDS1(J5)to serial mode. ver113-2c
+    'DDS (AD9850/9851) can be hard wired. pin2=D2=0, pin3=D1=1,pin4=D0=1, D3-D7 are don't care.
+    'this will reset DDS into parallel, involk serial mode, then command zero output
+    out port, 3 'data=0000 0011, if the DDS is not already hard wired
+    '(reset DDS1 to parallel)Data,WCLK up,WCLK up and FQUD up,WCLK up and FQUD down,WCLK down
+    out control, AUTO       'WCLK up, FQUD=0
+    out control, STRBAUTO   'WCLK=1 and FQUD up
+    out control, AUTO       'WCLK=1, FQUD down
+    out control, contclear  'WCLK down, FQUD=0
+    '(end reset DDS1 to parallel)
+    '(involk serial mode DDS1)WCLK up, WCLK down, FQUD up, FQUD down
+    out control, AUTO:out control, contclear 'WCLK up, WCLK down
+    out control, STRB:out control, contclear 'FQUD up, FQUD down
+    'even if the DDS1, D0-D2 is not hard wired, it will be in Serial Mode
+    '(end involk serial mode DDS1)
+    '(command DDS1 to flush registers)D7=0,WCLK up,WCLK down,(repeat39more),FQUD up,FQUD down
+    out port, 0  'D7=0
+    for thisloop = 0 to 39
+    out control, AUTO:out control, contclear  'D7=0,WCLK up,WCLK down
+    next thisloop
+    out control, STRB:out control, contclear 'FQUD up, FQUD down
+    '(end command DDS1 flush)DDS will output a DC signal
+    return
+
+[ResetDDS3ser]'OrigControlBoard.needed:AUTO,STRB,STRBAUTO ; set DDS3(J4)to serial mode. ver113-2c
+    'DDS3 (AD9850/9851) must be hard wired. pin2=D2=0, pin3=D1=1,pin4=D0=1, D3-D7 are don't care.
+    out control, Jcontrol  'enable Control Board J connector
+    '(reset DDS3 to parallel)WCLK up and FQUD up,WCLK down and FQUD down
+    out port, 34 'WCLK up and FQUD up.  DDS register pointer will reset
+    '(end reset DDS1 to parallel)
+
+
+
+    out port, sfqud:out port, 0 ' DDSpin8, FQUD up, FQUD down.  DDS register pointer will reset
+    out port, swclk:out port, 0 ' DDSpin9, WCLK up, DDS WCLK down
+    out port, sfqud:out port, 0 ' DDSpin8, FQUD up, FQUD down.  DDS will go to 0 Hz.
+    out control, contclear  'disable Control Board J connector
+    return
+
+[ResetDDS1serSLIM]'reset serial DDS1 without disturbing Filter Bank or PDM. ver113-2c
+    'must have DDS (AD9850/9851) hard wired. pin2=D2=0, pin3=D1=1,pin4=D0=1, D3-D7 are don't care.
+    'this will reset DDS into parallel, involk serial mode, then command to 0 Hz.
+    pdmcmd = phaarray(thisstep,0) 'ver111-39d
+
+    '(reset DDS1 to parallel)WCLK up,WCLK up and FQUD up,WCLK up and FQUD down,WCLK down
+    out port, filtbank + 1     'apply last known filter path and WCLK=D0=1 to buffer
+    out control, SELT          'DDSpin9, WCLK up to DDS
+    out control, contclear     'disable buffer,leaving filtbank, and WCLK=high to DDS
+    out port, pdmcmd*64 + 2    'apply last known pdmcmd and FQUD=D3=1 to buffer
+    out control, INIT          'DDSpin8, FQUD up,DDS resets to parallel,register pointer will reset
+    out port, pdmcmd*64        'DDSpin8, FQUD down
+    out control, contclear     'disable buffer, leaving last known PDM state latched
+    out port, filtbank         'apply last known filter path and WCLK=D0=0 to buffer
+    out control, SELT          'DDSpin9, WCLK down
+    out control, contclear     'disable buffer,leaving filtbank
+    '(end reset DDS1 to parallel)
+    '(involk serial mode DDS1)WCLK up, WCLK down, FQUD up, FQUD down
+    out port, filtbank + 1     'apply last known filter path and WCLK=D0=1 to buffer
+    out control, SELT          'DDSpin9, WCLK up to DDS
+    out port, filtbank         'apply last known filter path and WCLK=D0=0 to DDS
+    out control, contclear     'disable buffer,leaving filtbank
+    out port, pdmcmd*64 + 2    'apply last known pdmcmd and FQUD=D3=1 to buffer
+    out control, INIT          'DDSpin8, FQUD up,DDS resets to parallel,register pointer will reset
+    out port, pdmcmd*64        'DDSpin8, FQUD down
+    out control, contclear     'disable buffer, leaving last known PDM state latched
+    '(end involk serial mode DDS1)
+    '(flush and command DDS1)D7,WCLK up,WCLK down,(repeat39more),FQUD up,FQUD down
+    'present data to buffer,latch buffer,disable buffer,present data+clk to buffer,latch buffer,disable buffer
+    a=filtbank
+    for thisloop = 0 to 39
+    out port, a:out control, SELT:out control, contclear: out port, a+1:out control, SELT:out control, contclear
+    next thisloop
+    out port, a:out control, SELT:out control, contclear 'leaving filtbank latched
+    out port, pdmcmd*64 + 2    'apply last known pdmcmd and FQUD=D3=1 to buffer
+    out control, INIT          'DDSpin8, FQUD up,DDS resets to parallel,register pointer will reset
+    out port, pdmcmd*64        'DDSpin8, FQUD down
+    out control, contclear     'disable buffer, leaving last known PDM state latched
+    '(end flush command DDS1)
+    return 'to '[InitializeDDS1]
+
+[ResetDDS1serUSB] 'USB:01-08-2010
+    pdmcmd = phaarray(thisstep,0) 'ver111-39d
+
+'(reset DDS3 to parallel)WCLK up,WCLK up and FQUD up,WCLK up and FQUD down,WCLK down
+    USBwrbuf$ = "A10100"+ToHex$(filtbank + 1)
+    if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf$ as ptr, 4 as short, result as boolean
+    if result <>  TRUE then
+        if USBdevice <> 0 then CALLDLL #USB, "UsbMSAInit", USBdevice as long, result as boolean
+        if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf$ as ptr, 4 as short, result as boolean
+    end if
+    USBwrbuf2$ = "A30200"+ToHex$(pdmcmd*64 + 2)+ToHex$(pdmcmd*64)
+    if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf2$ as ptr, 5 as short, result as boolean
+    USBwrbuf$ = "A10300"+ToHex$(filtbank)+ToHex$(filtbank + 1)+ToHex$(filtbank)
+    if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf$ as ptr, 6 as short, result as boolean
+    if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf2$ as ptr, 5 as short, result as boolean
+'(end involk serial mode DDS3)
+'(flush and command DDS3)D7,WCLK up,WCLK down,(repeat39more),FQUD up,FQUD down
+'present data to buffer,latch buffer,disable buffer,present data+clk to buffer,latch buffer,disable buffer
+    USBwrbuf$ = "A12801"
+    USBwrbuf3$ = ToHex$( filtbank )
+    for thisloop = 0 to 39
+        USBwrbuf$ = USBwrbuf$ + USBwrbuf3$
+    next thisloop
+    if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf$ as ptr, 43 as short, result as boolean
+    if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf2$ as ptr, 5 as short, result as boolean
+'(end flush command DDS3)
+
+    return
+
+[ResetDDS3serSLIM]'reset serial DDS3 without disturbing Filter Bank or PDM. ver113-2c
+    'must have DDS (AD9850/9851) hard wired. pin2=D2=0, pin3=D1=1,pin4=D0=1, D3-D7 are don't care.
+    'this will reset DDS into parallel, involk serial mode, then command to 0 Hz.
+    pdmcmd = phaarray(thisstep,0) 'ver111-39d
+
+    '(reset DDS3 to parallel)WCLK up,WCLK up and FQUD up,WCLK up and FQUD down,WCLK down
+    out port, filtbank + 1     'apply last known filter path and WCLK=D0=1 to buffer
+    out control, SELT          'DDSpin9, WCLK up to DDS
+    out control, contclear     'disable buffer,leaving filtbank, and WCLK=high to DDS
+    out port, pdmcmd*64 + 8    'apply last known pdmcmd and FQUD=D3=1 to buffer
+    out control, INIT          'DDSpin8, FQUD up,DDS resets to parallel,register pointer will reset
+    out port, pdmcmd*64        'DDSpin8, FQUD down
+    out control, contclear     'disable buffer, leaving last known PDM state latched
+    out port, filtbank         'apply last known filter path and WCLK=D0=0 to buffer
+    out control, SELT          'DDSpin9, WCLK down
+    out control, contclear     'disable buffer,leaving filtbank
+    '(end reset DDS3 to parallel)
+    '(involk serial mode DDS3)WCLK up, WCLK down, FQUD up, FQUD down
+    out port, filtbank + 1     'apply last known filter path and WCLK=D0=1 to buffer
+    out control, SELT          'DDSpin9, WCLK up to DDS
+    out port, filtbank         'apply last known filter path and WCLK=D0=0 to DDS
+    out control, contclear     'disable buffer,leaving filtbank
+    out port, pdmcmd*64 + 8    'apply last known pdmcmd and FQUD=D3=1 to buffer
+    out control, INIT          'DDSpin8, FQUD up,DDS resets to parallel,register pointer will reset
+    out port, pdmcmd*64        'DDSpin8, FQUD down
+    out control, contclear     'disable buffer, leaving last known PDM state latched
+    '(end involk serial mode DDS3)
+    '(flush and command DDS3)D7,WCLK up,WCLK down,(repeat39more),FQUD up,FQUD down
+    'present data to buffer,latch buffer,disable buffer,present data+clk to buffer,latch buffer,disable buffer
+    a=filtbank
+    for thisloop = 0 to 39
+    out port, a:out control, SELT:out control, contclear: out port, a+1:out control, SELT:out control, contclear
+    next thisloop
+    out port, a:out control, SELT:out control, contclear 'leaving filtbank latched
+    out port, pdmcmd*64 + 8    'apply last known pdmcmd and FQUD=D3=1 to buffer
+    out control, INIT          'DDSpin8, FQUD up,DDS resets to parallel,register pointer will reset
+    out port, pdmcmd*64        'DDSpin8, FQUD down
+    out control, contclear     'disable buffer, leaving last known PDM state latched
+    '(end flush command DDS3)
+    return 'to '(InitializeDDS 3)
+
+[ResetDDS3serUSB] 'USB:01-08-2010
+'reset serial DDS3 without disturbing Filter Bank or PDM. usb v1.0
+'must have DDS (AD9850/9851) hard wired. pin2=D2=0, pin3=D1=1,pin4=D0=1, D3-D7 are don't care.
+'this will reset DDS into parallel, involk serial mode, then command to 0 Hz.
+    pdmcmd = phaarray(thisstep,0) 'ver111-39d
+
+    '(reset DDS3 to parallel)WCLK up,WCLK up and FQUD up,WCLK up and FQUD down,WCLK down
+    USBwrbuf$ = "A10100"+ToHex$(filtbank + 1)
+    if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf$ as ptr, 4 as short, result as boolean
+    USBwrbuf2$ = "A30200"+ToHex$(pdmcmd*64 + 8)+ToHex$(pdmcmd*64)
+    if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf2$ as ptr, 5 as short, result as boolean
+    USBwrbuf$ = "A10300"+ToHex$(filtbank)+ToHex$(filtbank + 1)+ToHex$(filtbank)
+    if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf$ as ptr, 6 as short, result as boolean
+    if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf2$ as ptr, 5 as short, result as boolean
+    '(end involk serial mode DDS3)
+    '(flush and command DDS3)D7,WCLK up,WCLK down,(repeat39more),FQUD up,FQUD down
+    'present data to buffer,latch buffer,disable buffer,present data+clk to buffer,latch buffer,disable buffer
+    USBwrbuf$ = "A12801"
+    USBwrbuf3$ = ToHex$( filtbank )
+    for thisloop = 0 to 39
+        USBwrbuf$ = USBwrbuf$ + USBwrbuf3$
+    next thisloop
+    if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf$ as ptr, 43 as short, result as boolean
+    if USBdevice <> 0 then CALLDLL #USB, "UsbMSADeviceWriteString", USBdevice as long, USBwrbuf2$ as ptr, 5 as short, result as boolean
+    '(end flush command DDS3)
+    return 'to '(InitializeDDS 3)
+
+[CommandDDS1]'ver111-36b. ver113-4a
+    'this will recalculate DDS1, using the values in the Command DDS 1 Box, and "with DDS Clock at" Box.
+    'it will insert the new DDS 1 frequency into the command arrays for all steps, leaving others alone
+    'it will initiate a re-command at thisstep (where the sweep was halted)
+      'if Original Control Board is used, only the DDS 1 is re-commanded. ver113-4a
+      'if SLIM Control Board is used, all 4 modules will be re-commanded. ver113-4a
+    'using One Step or Continue will retain the new DDS1 frequency.
+    'PLO1 will be non-functional until [Restart] button is clicked. PLL1 will break lock and "slam" to extreme.
+    '[Restart] will reset arrays and begin sweeping at step 0. Special Tests Window will not be updated.
+    'Signal Generator or Tracking Generator output will not be effected.
+    'caution, do not enter a frequency that is higher than 1/2 the masterclock frequency (ddsclock)
+    print #special.dds1out, "!contents? dds1out$";   'grab contents of Command DDS 1 Box
+    ddsoutput = val(dds1out$) 'intended output frequency of DDS 1
+    print #special.masclkf, "!contents? msclk$";   'grab contents of "with DDS Clock at" box
+    msclk = val(msclk$) 'if "with DDS Clock at" box was not changed, this is the real MasterClock frequency
+    ddsclock = msclk
+    'caution: if ddsoutput >= to .5 ddsclock, the program will error out
+    gosub [CreateBaseForDDSarray]'needed:ddsoutput,ddsclock ; creates: base,sw0thrusw39,w0thruw4
+    remember = thisstep 'remember where we were when entering this subroutine
+    for thisstep = 0 to steps 'ver112-2a
+    gosub [FillDDS1array]'need thisstep,sw0-sw39,w0-w4,base,ddsclock
+    next thisstep 'ver112-2a
+    thisstep = remember 'ver112-2a
+    gosub [CreateCmdAllArray] 'ver112-2a
+    if cb = 0 then gosub [CommandDDS1OrigCB]'will command DDS 1, only
+'delver113-4a    if cb = 2 then gosub [CommandDDS1SlimCB]'will command DDS 1, only
+    if cb = 2 then gosub [CommandAllSlims]'will command all 4 modules. ver113-4a
+    if cb = 3 then gosub [CommandAllSlimsUSB]'will command all 4 modules. ver113-4a 'USB:01-08-2010
+    wait
+
+[CommandDDS3]'ver111-38a
+    'this will recalculate DDS3, using the values in the Command DDS 3 Box, and "with DDS Clock at" Box.
+    'it will insert the new DDS 3 frequency into the command arrays for all steps, leaving others alone
+    'it will initiate a re-command at thisstep (where the sweep was halted)
+      'only the DDS 3 is re-commanded
+    'using One Step or Continue will retain the new DDS3 frequency.
+    'PLO3 will be non-functional until [Restart] button is clicked. PLL3 will break lock and "slam" to extreme.
+    '[Restart] will reset arrays and begin sweeping at step 0. Special Tests Window will not be updated.
+    'Signal Generator or Tracking Generator output will be non functional.
+    'Spectrum Analyzer function is not effected
+    'caution, do not enter a frequency that is higher than 1/2 the masterclock frequency (ddsclock)
+    print #special.dds3out, "!contents? dds3out$";   'grab contents of Command DDS 3 Box
+    ddsoutput = val(dds3out$) 'intended output frequency of DDS 3
+    print #special.masclkf, "!contents? msclk$";   'grab contents of "with DDS Clock at" box
+    msclk = val(msclk$) 'if "with DDS Clock at" box was not changed, this is the real MasterClock frequency
+    ddsclock = msclk
+    'caution: if ddsoutput >= to .5 ddsclock, the program will error out
+    gosub [CreateBaseForDDSarray]'needed:ddsoutput,ddsclock ; creates: base,sw0thrusw39,w0thruw4
+    remember = thisstep 'remember where we were when entering this subroutine
+    for thisstep = 0 to steps
+    gosub [FillDDS3array]'need thisstep,sw0-sw39,w0-w4,base,ddsclock
+    next thisstep
+    thisstep = remember
+    gosub [CreateCmdAllArray]
+    if cb = 0 then gosub [CommandDDS3OrigCB]'will command DDS 3, only
+'delver113-4a    if cb = 2 then gosub [CommandDDS3SlimCB]'will command DDS 3, only
+    if cb = 2 then gosub [CommandAllSlims]'will command all 4 modules. ver113-4a
+    if cb = 3 then gosub [CommandAllSlimsUSB]'will command all 4 modules. ver113-4a 'USB:01-08-2010
+    wait
+
+[DDS3Track]'ver111-39d
+    'This uses DDS3 as a Tracking Generator, but is limited to 0 to 32 MHz, when MasterClock is 64 MHz
+    'DDS3 spare output is rich in harmonics and aliases.
+    'Tracks the values in Working Window, Center Frequency and Sweep Width (already in the command arrays)
+    'The Spectrum Analyzer function is not effected.
+    'PLO3, Normal Tracking Generator, and Phase portion of VNA will be non-functional
+    'Operation:
+    'In Working Window, enter Center Frequency to be within 0 to 32 (MHz), or less than 1/2 the MasterClock
+    'In Working Window, enter Sweep Width (in MHz). But, do not allow sweep to go below 0 or abov 1/2 MasterClock
+    'Click [Restart], then halt.
+    'In Special Tests Window, click [DDS 3 Track].  DDS 3 will, immediately, re-command to new frequency.
+    'Click [Continue]. Sweep will resume, but with DDS 3 tracking the Spectrum Analalyzer
+    '[One Step] and [Continue] and halting operates normally until [Restart] button is pressed.
+    '[Restart] will reset arrays, and leave the DDS 3 Track Mode. ie, normal sweeping.
+    ddsclock = masterclock
+    remember = thisstep
+    for thisstep = 0 to steps
+    ddsoutput = datatable(thisstep,1)
+    'caution: if ddsoutput >= to .5 ddsclock, the program will error out
+    gosub [CreateBaseForDDSarray]'needed:ddsoutput,ddsclock ; creates: base,sw0thrusw39,w0thruw4
+    gosub [FillDDS3array]'need thisstep,sw0-sw39,w0-w4,base,ddsclock
+    next thisstep
+    thisstep = remember
+    gosub [CreateCmdAllArray]
+    if cb = 0 then gosub [CommandDDS3OrigCB]'will command DDS 3, only
+    if cb = 2 then gosub [CommandAllSlims]'will command all 4 modules. ver113-4a
+    if cb = 3 then gosub [CommandAllSlimsUSB]'will command all 4 modules. 'USB:01-08-2010
+    wait
+
+[DDS1Sweep]'ver112-2c
+    'This forces the DDS 1 to the values in Working Window: Center Frequency and Sweep Width (already in the command arrays)
+    'DDS1 spare output is rich in harmonics and aliases.
+    'PLO1, and thus, the Spectrum Analyzer will be non-functional in this mode.
+    'Signal Generator or Tracking Generator output will not be affected.
+    'Operation:
+    'In Working Window, enter Center Frequency to be within 0 to 32 (MHz), or less than 1/2 the MasterClock
+    'In Working Window, enter Sweep Width (in MHz). But, do not allow sweep to go below 0 or abov 1/2 MasterClock
+    'Click [Restart], then halt.
+    'In Special Tests Window, click [DDS 1 Sweep].  DDS 1 will, immediately, re-command to new frequency.
+    'Click [Continue]. Sweep will resume, but with DDS 1 sweeping.
+    '[One Step] and [Continue] and halting operates normally until [Restart] button is pressed.
+    '[Restart] will reset arrays, and will leave the DDS 1 Sweep Mode. ie, normal sweeping.
+    ddsclock = masterclock
+    remember = thisstep
+    for thisstep = 0 to steps
+    ddsoutput = datatable(thisstep,1)
+    'caution: if ddsoutput >= to .5 ddsclock, the program will error out
+    gosub [CreateBaseForDDSarray]'needed:ddsoutput,ddsclock ; creates: base,sw0thrusw39,w0thruw4
+    gosub [FillDDS1array]'need thisstep,sw0-sw39,w0-w4,base,ddsclock
+    next thisstep
+    thisstep = remember
+    gosub [CreateCmdAllArray]
+    if cb = 0 then gosub [CommandDDS1OrigCB]'will command DDS 1, only
+    if cb = 2 then gosub [CommandAllSlims]'will command all 4 modules. ver113-4a
+    if cb = 3 then gosub [CommandAllSlimsUSB]'will command all 4 modules.  'USB:01-08-2010 moved ver116-4f
+    wait
+
