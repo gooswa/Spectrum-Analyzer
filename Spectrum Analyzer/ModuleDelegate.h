@@ -11,7 +11,7 @@
 @protocol ModuleDelegate <NSObject>
 
 @optional
-- (void)moduleDidBecomeStale;
-- (void)moduleWillUpdateHardware;
+- (void)moduleDidBecomeStale:(id)sender;
+- (void)moduleWillUpdateHardware:(id)sender;
 
 @end
