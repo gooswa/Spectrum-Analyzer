@@ -7,19 +7,12 @@
 //
 
 #import <Cocoa/Cocoa.h>
-//#import "BusPirate.h"
-#import "Chipkit.h"
-#import "LMX_PLL.h"
-#import "AD_DDS.h"
+#import "SpectrumAnalyzer.h"
 
-@interface AppDelegate : NSObject <NSApplicationDelegate, NSTextFieldDelegate>
+@interface AppDelegate : NSObject <NSApplicationDelegate,
+                                   NSTextFieldDelegate,
+                                   SpectrumAnalyerDelegate>
 {
-//    BusPirate *interface;
-    Chipkit *interface;
-
-    LMX_PLL *PLO1, *PLO2, *PLO3;
-    AD_DDS  *DDS1, *DDS3;
-    
     IBOutlet NSTextField *DDS1_freq;
     IBOutlet NSTextField *DDS3_freq;
     IBOutlet NSTextField *PLO1_oFreq;
@@ -28,8 +21,24 @@
     IBOutlet NSTextField *PLO1_pFreq;
     IBOutlet NSTextField *PLO2_pFreq;
     IBOutlet NSTextField *PLO3_pFreq;
+    
+    IBOutlet NSTextField *ADC_phase;
+    IBOutlet NSTextField *ADC_mag;
+    IBOutlet NSTextField *ADC_count;
+    IBOutlet NSTextField *ADC_delay;
+
+    IBOutlet NSTextField *DDS_start;
+    IBOutlet NSTextField *DDS_stop;
+    IBOutlet NSTextField *DDS_steps;
+    IBOutlet NSTextField *DDS_delay;
+    
+    @private
+    SpectrumAnalyzer *analyzer;
 }
 
 @property (assign) IBOutlet NSWindow *window;
+
+- (IBAction)ADC_go:(id)sender;
+- (IBAction)DDS1_Scan:(id)sender;
 
 @end
