@@ -8,6 +8,14 @@
 
 #import <Foundation/Foundation.h>
 
+@class HardwareInterface;
+
 @interface ADC : NSObject
+
+- (void)sampleCount:(NSInteger)counts
+              Delay:(NSInteger)delay
+                Mag:(double *)magValue
+              Phase:(double *)phaseValue
+          Interface:(HardwareInterface *)interface;
 
 @end

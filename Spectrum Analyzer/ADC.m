@@ -7,7 +7,27 @@
 //
 
 #import "ADC.h"
+#include "HardwareInterface.h"
 
 @implementation ADC
+
+-(void)sampleCount:(NSInteger)counts
+             Delay:(NSInteger)delay
+               Mag:(double *)magValue 
+             Phase:(double *)phaseValue
+         Interface:(HardwareInterface *)interface
+{
+    if (interface) {
+        [interface readADCdelay:delay
+                        samples:counts
+                            mag:magValue
+                          phase:phaseValue];
+    } else {
+        *magValue = 0.;
+        *phaseValue = 0.;
+    }
+    
+    return;
+}
 
 @end
