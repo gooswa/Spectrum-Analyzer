@@ -24,6 +24,7 @@
 		3CEBBDFA14DC9D9E0045F1DE /* SpectrumAnalyzer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CEBBDF914DC9D9E0045F1DE /* SpectrumAnalyzer.m */; };
 		3CEBBE1114DCAEE50045F1DE /* notes.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3CEBBE1014DCAEE50045F1DE /* notes.txt */; };
 		3CEBBE1314DCB07D0045F1DE /* decimate-basic.bas in Resources */ = {isa = PBXBuildFile; fileRef = 3CEBBE1214DCB07D0045F1DE /* decimate-basic.bas */; };
+		3CEBBE2114DDA5F40045F1DE /* lmx2326.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 3CEBBE2014DDA5F40045F1DE /* lmx2326.pdf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,6 +70,7 @@
 		3CEBBE1014DCAEE50045F1DE /* notes.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = notes.txt; sourceTree = "<group>"; };
 		3CEBBE1214DCB07D0045F1DE /* decimate-basic.bas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "decimate-basic.bas"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
 		3CEBBE1414DCB82F0045F1DE /* ModuleDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ModuleDelegate.h; sourceTree = "<group>"; };
+		3CEBBE2014DDA5F40045F1DE /* lmx2326.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = lmx2326.pdf; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -173,6 +175,7 @@
 		3C67822414CBB1AD00837156 /* Module Drivers */ = {
 			isa = PBXGroup;
 			children = (
+				3CEBBE2014DDA5F40045F1DE /* lmx2326.pdf */,
 				3C67822514CBB1CB00837156 /* LMX_PLL.h */,
 				3C67822614CBB1CB00837156 /* LMX_PLL.m */,
 				3C67822B14CC076000837156 /* AD_DDS.h */,
@@ -267,6 +270,7 @@
 				3CEBBDF714DC9D000045F1DE /* MSA_version116_4q.bas in Resources */,
 				3CEBBE1114DCAEE50045F1DE /* notes.txt in Resources */,
 				3CEBBE1314DCB07D0045F1DE /* decimate-basic.bas in Resources */,
+				3CEBBE2114DDA5F40045F1DE /* lmx2326.pdf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
