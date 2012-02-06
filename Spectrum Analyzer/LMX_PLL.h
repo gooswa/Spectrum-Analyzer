@@ -12,12 +12,12 @@
 @class HardwareInterface;
 
 #define FoLD_TRIS 0 // Tri-state
-#define FoLD_RDIV 1 // R Divider output
+#define FoLD_LDET 1 // Digital lock detect
 #define FoLD_NDIV 2 // N Divider output
-#define FoLD_SDAT 3 // Serial Data Out
-#define FoLD_LDET 4 // Digital lock detect
+#define FoLD_LKAH 3 // Active HIGH
+#define FoLD_RDIV 4 // R Divider output
 #define FoLD_LKOD 5 // n Channel Open Drain
-#define FoLD_LKAH 6 // Active HIGH
+#define FoLD_SDAT 6 // Serial Data Out
 #define FoLD_LKAL 7 // Active LOW
 
 @interface LMX_PLL : NSObject
@@ -45,6 +45,8 @@
     uint32 int_r_divider;
     uint32 int_n_divider;
     
+    uint32 shadow[3];
+    
     id<ModuleDelegate> *delegate;
 }
 
@@ -59,6 +61,8 @@
 @property(readwrite) bool invertingCP;
 @property(readwrite) bool initialize;
 @property(readwrite) char FoLD_output;
+@property(readonly)  int n_divider;
+@property(readonly)  int r_divider;
 
 - (void)updateHardware:(HardwareInterface *)interface;
 

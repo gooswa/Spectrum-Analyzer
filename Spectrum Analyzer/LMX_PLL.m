@@ -49,6 +49,10 @@
         FoLD_output = FoLD_TRIS;
         invertingCP = YES;
         initialize  = YES;
+        
+        shadow[0] = 0;
+        shadow[1] = 0;
+        shadow[2] = 0;
     }
     
     return self;
@@ -114,6 +118,16 @@
     }
 }
 
+- (int)n_divider
+{
+    return int_n_divider;
+}
+
+- (int)r_divider
+{
+    return int_r_divider;
+}
+
 - (void)recalculate
 {
     // Calculate dividers and calculate new frequencies
@@ -164,30 +178,77 @@
     registers[N_DIVIDER_REGISTER] |= N_DIVIDER_REGISTER;
     
     // This register controls all the functions of the PLL
-    registers[FUNCTION_REGISTER]   = (invertingCP)? PD_POLARITY : 0;
+    registers[FUNCTION_REGISTER]   = (invertingCP)? 0 : PD_POLARITY;
     registers[FUNCTION_REGISTER]  |= (FoLD_output & FOLD_CONTROL_MASK) << FOLD_CONTROL_OFFSET;
     registers[FUNCTION_REGISTER]  |= (initialize)?  INITIALIZATION : 0;
     registers[FUNCTION_REGISTER]  |= FUNCTION_REGISTER;
-    initialize = NO;
+    // We don't need to save the initalization command in the shadow,
+    // if we're initializing, create an equivalent setting and save it instead
+    if (initialize) {
+        // This bit is 0 = inverting, 1 = non-inverting
+        shadow[FUNCTION_REGISTER]   = (invertingCP)? 0 : PD_POLARITY;
+        shadow[FUNCTION_REGISTER]  |= (FoLD_output & FOLD_CONTROL_MASK) << FOLD_CONTROL_OFFSET;
+        shadow[FUNCTION_REGISTER]  |= FUNCTION_REGISTER;
+    }
     
     // If the interface is non-null, update the hardware
     if (interface) {
-        // Send the registers to the PLL
-        [interface sendSPIwithPin:Data
-                            Clock:Clock
-                               CS:CS
-                             data:registers[FUNCTION_REGISTER]
-                             bits:21];
-        [interface sendSPIwithPin:Data
-                            Clock:Clock
-                               CS:CS
-                             data:registers[R_DIVIDER_REGISTER]
-                             bits:21];
-        [interface sendSPIwithPin:Data
-                            Clock:Clock
-                               CS:CS
-                             data:registers[N_DIVIDER_REGISTER]
-                             bits:21];
+
+        // Send the (changed) registers to the PLL
+        if (registers[FUNCTION_REGISTER] != shadow[FUNCTION_REGISTER]) {
+            [interface sendSPIwithPin:Data
+                                Clock:Clock
+                                   CS:CS
+                                 data:registers[FUNCTION_REGISTER]
+                                 bits:21];
+            shadow[FUNCTION_REGISTER] = registers[FUNCTION_REGISTER];
+            if (initialize) {
+                initialize = NO;
+            } else {
+                shadow[FUNCTION_REGISTER] = registers[FUNCTION_REGISTER];
+            }
+        }
+        
+        if (registers[R_DIVIDER_REGISTER] != shadow[R_DIVIDER_REGISTER]) {
+            [interface sendSPIwithPin:Data
+                                Clock:Clock
+                                   CS:CS
+                                 data:registers[R_DIVIDER_REGISTER]
+                                 bits:21];
+            shadow[R_DIVIDER_REGISTER] = registers[R_DIVIDER_REGISTER];
+        }
+        
+        if (registers[N_DIVIDER_REGISTER] != shadow[N_DIVIDER_REGISTER]) {
+            [interface sendSPIwithPin:Data
+                                Clock:Clock
+                                   CS:CS
+                                 data:registers[N_DIVIDER_REGISTER]
+                                 bits:21];
+            shadow[N_DIVIDER_REGISTER] = registers[N_DIVIDER_REGISTER];
+        }
+    } else {
+        printf("Tuning to %f (ref(%f) / r(%d)) * n(%d)) n -> ((b)%d * 32 + (a)%d)\n",
+               outputFreq, refFreq, int_r_divider, int_n_divider, int_b_divider, int_a_divider);
+        if (registers[FUNCTION_REGISTER] != shadow[FUNCTION_REGISTER]) {
+            printf("Updating the function register: 0x%x\n", registers[FUNCTION_REGISTER]);
+            // If we're initializing, don't copy the register into the shadow
+            // there is a better version already there.
+            if (initialize) {
+                initialize = NO;
+            } else {
+                shadow[FUNCTION_REGISTER] = registers[FUNCTION_REGISTER];
+            }
+        }
+        
+        if (registers[R_DIVIDER_REGISTER] != shadow[R_DIVIDER_REGISTER]) {
+            printf("Updating the R divider: 0x%x\n", registers[R_DIVIDER_REGISTER]);
+            shadow[R_DIVIDER_REGISTER] = registers[R_DIVIDER_REGISTER];
+        }
+        
+        if (registers[N_DIVIDER_REGISTER] != shadow[N_DIVIDER_REGISTER]) {
+            printf("Updating the N divider: 0x%x\n", registers[N_DIVIDER_REGISTER]);
+            shadow[N_DIVIDER_REGISTER] = registers[N_DIVIDER_REGISTER];
+        }
     }
 }
 
