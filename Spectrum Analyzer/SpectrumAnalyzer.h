@@ -36,7 +36,13 @@ typedef struct {
     AD_DDS  *DDS1, *DDS3;
     ADC     *adc;
     
+    double   IF1, IF2, LO2;
+    double   RBW;
+    
     id <SpectrumAnalyerDelegate> delegate;
+    
+    @private
+    BOOL inhibit_callbacks;
 }
 
 @property(assign) id<SpectrumAnalyerDelegate> delegate;
@@ -55,6 +61,13 @@ typedef struct {
 // to reduce the occurance of spurs, etc.
 // It also assumes the values set for LO1, LO2, etc.
 - (void)tuneTo:(double)frequency;
+
+// This method will perform a sweep using the entire
+// analyzer across a given interval using a given number of steps
+- (AnalyzerSample_t *)scanFrom:(double)startFreq
+                            To:(double)stopFreq
+                     withSteps:(NSInteger)steps
+                      andDelay:(NSInteger)delay;
 
 // This is more of a diagnostics method.  It will
 // execute a scan using the DDS module.  It will

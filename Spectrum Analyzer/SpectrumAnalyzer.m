@@ -25,6 +25,13 @@
     if (self) {
         interface = newInterface;
         
+        IF1 = 1013.3;
+        IF2 = 10.7;
+        LO2 = 1024;
+        RBW = .002;
+        
+        inhibit_callbacks = NO;
+        
         // Setup the ADC
         adc = [[ADC alloc] init];
         
@@ -33,7 +40,8 @@
         PLO2.CS    = 4;
         PLO2.Data  = 3;
         PLO2.Clock = 2;
-        PLO2.FoLD_output = FoLD_RDIV;
+        PLO2.FoLD_output = FoLD_NDIV;
+        PLO2.invertingCP = NO;
         PLO2.refFreq = 64.0;
         PLO2.phaseFreq = 4.0;
         PLO2.outputFreq = 1024.0;
@@ -56,10 +64,12 @@
         PLO1.CS    = 12;
         PLO1.Data  = 11;
         PLO1.Clock = 10;
-        PLO1.FoLD_output = FoLD_RDIV;
+        PLO1.FoLD_output = FoLD_NDIV;
+        PLO1.invertingCP = YES;
         PLO1.refFreq = 10.7;
+//        PLO1.refFreq = 64;
         PLO1.phaseFreq = 0.972;
-        PLO1.outputFreq = 1450.;
+        PLO1.outputFreq = 1034;
         [PLO1 setDelegate:(id <ModuleDelegate>*)self];
         [PLO1 updateHardware:interface];
         
@@ -80,9 +90,10 @@
         PLO3.Data  = 18;
         PLO3.Clock = 17;
         PLO3.FoLD_output = FoLD_RDIV;
+        PLO3.invertingCP = YES;
         PLO3.refFreq = 10.7;
         PLO3.phaseFreq = 0.972;
-        PLO3.outputFreq = 1450;
+        PLO3.outputFreq = 1034;
         [PLO3 setDelegate:(id <ModuleDelegate>*)self];
         [PLO3 updateHardware:interface];
     }
@@ -92,12 +103,109 @@
 
 - (void)tuneTo:(double)frequency
 {
+    inhibit_callbacks = YES;
+    // The first IF comes from mixing LO1 with the input (PLO1)
+    // LO2 is fixed at 1024 Mhz
+    double LO1 = frequency + IF1;
+
+    // Because we can only tune PLO1 in .97 (PLO1.phaseFreq) steps,
+    // we need to approximate the LO1 tuning value.
+    PLO1.refFreq = IF2;
+    PLO1.outputFreq = LO1;
     
+    // Now, PLO1 is "stale" (which means that its software representation
+    // doesn't match the hardware.  That's OK because we only want the
+    // calculated tuning value.
+    double PLO1_error = LO1 - PLO1.outputFreq;
+    
+    // Next, using the frequency error, we can figure out a new fine tuning
+    // of the DDS to make the PLO1 output frequency very close to desired
+    double correctedDDS1 = IF2 + (PLO1_error/PLO1.n_divider) * PLO1.r_divider;
+    DDS1.outputFreq = correctedDDS1;
+    PLO1.refFreq = DDS1.outputFreq;
+    [DDS1 updateHardware:interface];
+    [PLO1 updateHardware:interface];
+
+    // Check for the possibility for spurs (this may be garbage)
+/*    double firstIF   = LO2 - IF2;
+    double fractFreq = DDS1.outputFreq / (PLO1.r_divider * 16);
+    double harmonicb = round(firstIF/fractFreq);
+    double harmonica = harmonicb - 1;
+    double harmonicc = harmonicb + 1;
+    double firstIF_low  = LO2 - (IF2 + RBW);
+    double firstIF_high = LO2 - (IF2 - RBW);
+    
+    BOOL spur = NO;
+    if (harmonica * fractFreq > firstIF_low &&
+        harmonica * fractFreq < firstIF_high) {
+        spur = YES;
+    }
+
+    if (harmonicb * fractFreq > firstIF_low &&
+        harmonicb * fractFreq < firstIF_high) {
+        spur = YES;
+    }
+
+    if (harmonicc * fractFreq > firstIF_low &&
+        harmonicc * fractFreq < firstIF_high) {
+        spur = YES;
+    }
+
+    // There was a spur.  This means we need to tweak the value of the
+    // DDS such that we move the spur out of the passband of the final filter
+    // Do do this, we'll either increment or decrememnt the N counter of the
+    // PLO, and compute an appropriate DDS frequency using it.
+    if (spur) {
+        printf("SPUR DETECTED!!\n");
+    }
+*/    
+    
+    inhibit_callbacks = NO;
+    
+    printf("Tried to tune the analyzer to %f, achieved %f.  Error of %f hz.\n",
+           frequency,
+           PLO1.outputFreq - IF1,
+           (frequency - (PLO1.outputFreq - IF1)) * 1000000);
+}
+
+-(AnalyzerSample_t *)scanFrom:(double)startFreq
+                           To:(double)stopFreq
+                    withSteps:(NSInteger)steps
+                     andDelay:(NSInteger)delay
+{
+    double mag, phase;
+    
+    // We want to make sure that we actually hit the last frequency
+    // therefore, we want to subtract one from the steps.
+    double deltaFreq = (stopFreq - startFreq) / (float)(steps - 1);
+    
+    AnalyzerSample_t *results;
+    results = (AnalyzerSample_t *)malloc(sizeof(AnalyzerSample_t) * steps);
+    if (!results) {
+        return nil;
+    }
+    
+    for (int i = 0; i < steps; i++) {
+        double freq = startFreq + (deltaFreq * i);
+        
+        [self tuneTo:freq];
+        [adc sampleCount:1
+                   Delay:delay
+                     Mag:&mag
+                   Phase:&phase
+               Interface:interface];
+        
+        results[i].frequency = freq;
+        results[i].magnitude = mag;
+        results[i].phase = phase;
+    }
+    
+    return results;
 }
 
 - (AnalyzerSample_t *)scanWithDDS:(AD_DDS *)dds
                          fromFreq:(float)startFreq
-                           toFreq:(float)endFreq
+                           toFreq:(float)stopFreq
                         withSteps:(NSInteger)steps
                          andDelay:(NSInteger)mS
 {
@@ -105,7 +213,7 @@
 
     // We want to make sure that we actually hit the last frequency
     // therefore, we want to subtract one from the steps.
-    double deltaFreq = (endFreq - startFreq) / (float)(steps - 1);
+    double deltaFreq = (stopFreq - startFreq) / (float)(steps - 1);
     
     AnalyzerSample_t *results;
     results = (AnalyzerSample_t *)malloc(sizeof(AnalyzerSample_t) * steps);
@@ -139,23 +247,37 @@
 
 -(void)moduleDidBecomeStale:(id)sender
 {
-    // Because the DDS1 state changed, we need to re-compute the PLO1 stuff
-    if (sender == DDS1) {
-        [PLO1 setRefFreq:[DDS1 outputFreq]];
-        [DDS1 updateHardware:interface];
-        [PLO1 updateHardware:interface];
-    }
+    if (inhibit_callbacks == NO) {
+        // Because the DDS1 state changed, we need to re-compute the PLO1 stuff
+        if (sender == DDS1) {
+            [PLO1 setRefFreq:[DDS1 outputFreq]];
+            [DDS1 updateHardware:interface];
+            [PLO1 updateHardware:interface];
+        }
+        
+        // PLO3 is connected to DDS3
+        if (sender == DDS3) {
+            [PLO3 setRefFreq:[DDS3 outputFreq]];
+            [DDS3 updateHardware:interface];
+            [PLO3 updateHardware:interface];
+        }
+        
+        if (sender == PLO1) {
+            [PLO1 updateHardware:interface];
+        }
+        
+        if (sender == PLO2) {
+            [PLO2 updateHardware:interface];
+        }
+        
+        if (sender == PLO3) {
+            [PLO3 updateHardware:interface];
+        }
 
-    // PLO3 is connected to DDS3
-    if (sender == DDS3) {
-        [PLO3 setRefFreq:[DDS3 outputFreq]];
-        [DDS3 updateHardware:interface];
-        [PLO3 updateHardware:interface];
-    }
-    
-    if (delegate) {
-        if ([delegate respondsToSelector:@selector(configurationChanged)]) {
-            [delegate configurationChanged];
+        if (delegate) {
+            if ([delegate respondsToSelector:@selector(configurationChanged)]) {
+                [delegate configurationChanged];
+            }
         }
     }
 }
