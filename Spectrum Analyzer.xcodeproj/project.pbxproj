@@ -11,10 +11,10 @@
 		3C16DFB414C7BBFD002162F4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3C16DFB214C7BBFD002162F4 /* InfoPlist.strings */; };
 		3C16DFB614C7BBFD002162F4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C16DFB514C7BBFD002162F4 /* main.m */; };
 		3C16DFBA14C7BBFD002162F4 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 3C16DFB814C7BBFD002162F4 /* Credits.rtf */; };
-		3C16DFBD14C7BBFD002162F4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C16DFBC14C7BBFD002162F4 /* AppDelegate.m */; };
 		3C16DFC014C7BBFD002162F4 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C16DFBE14C7BBFD002162F4 /* MainMenu.xib */; };
 		3C16DFD014C7C4A8002162F4 /* SerialPort.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C16DFCF14C7C495002162F4 /* SerialPort.framework */; };
 		3C16DFD314C7C50B002162F4 /* BusPirate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C16DFD214C7C50B002162F4 /* BusPirate.m */; };
+		3C22772E14E0B03600F29768 /* TestAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C22772D14E0B03600F29768 /* TestAppDelegate.m */; };
 		3C429D0614D5C85D00DC2F64 /* ADC.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C429D0514D5C85D00DC2F64 /* ADC.m */; };
 		3C67822314CBA2A500837156 /* Chipkit.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822214CBA2A500837156 /* Chipkit.m */; };
 		3C67822714CBB1CB00837156 /* LMX_PLL.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822614CBB1CB00837156 /* LMX_PLL.m */; };
@@ -48,12 +48,12 @@
 		3C16DFB514C7BBFD002162F4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		3C16DFB714C7BBFD002162F4 /* Spectrum Analyzer-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Spectrum Analyzer-Prefix.pch"; sourceTree = "<group>"; };
 		3C16DFB914C7BBFD002162F4 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
-		3C16DFBB14C7BBFD002162F4 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		3C16DFBC14C7BBFD002162F4 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		3C16DFBB14C7BBFD002162F4 /* TestAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestAppDelegate.h; sourceTree = "<group>"; };
 		3C16DFBF14C7BBFD002162F4 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		3C16DFC714C7C495002162F4 /* SerialPort.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SerialPort.xcodeproj; path = ../frameworks/SerialPort/SerialPort.xcodeproj; sourceTree = "<group>"; };
 		3C16DFD114C7C50B002162F4 /* BusPirate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BusPirate.h; sourceTree = "<group>"; };
 		3C16DFD214C7C50B002162F4 /* BusPirate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BusPirate.m; sourceTree = "<group>"; };
+		3C22772D14E0B03600F29768 /* TestAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TestAppDelegate.m; sourceTree = "<group>"; };
 		3C429D0414D5C85D00DC2F64 /* ADC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ADC.h; sourceTree = "<group>"; };
 		3C429D0514D5C85D00DC2F64 /* ADC.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ADC.m; sourceTree = "<group>"; };
 		3C67822114CBA2A500837156 /* Chipkit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Chipkit.h; sourceTree = "<group>"; };
@@ -128,8 +128,8 @@
 			children = (
 				3CEBBDF814DC9D9E0045F1DE /* SpectrumAnalyzer.h */,
 				3CEBBDF914DC9D9E0045F1DE /* SpectrumAnalyzer.m */,
-				3C16DFBB14C7BBFD002162F4 /* AppDelegate.h */,
-				3C16DFBC14C7BBFD002162F4 /* AppDelegate.m */,
+				3C16DFBB14C7BBFD002162F4 /* TestAppDelegate.h */,
+				3C22772D14E0B03600F29768 /* TestAppDelegate.m */,
 				3CEBBDF514DC9CEE0045F1DE /* Resources */,
 				3C67822414CBB1AD00837156 /* Module Drivers */,
 				3C16DFC614C7BC2D002162F4 /* Hardware interface */,
@@ -200,9 +200,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		3C16DFA414C7BBFD002162F4 /* Spectrum Analyzer */ = {
+		3C16DFA414C7BBFD002162F4 /* TestApp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3C16DFC314C7BBFD002162F4 /* Build configuration list for PBXNativeTarget "Spectrum Analyzer" */;
+			buildConfigurationList = 3C16DFC314C7BBFD002162F4 /* Build configuration list for PBXNativeTarget "TestApp" */;
 			buildPhases = (
 				3C16DFA114C7BBFD002162F4 /* Sources */,
 				3C16DFA214C7BBFD002162F4 /* Frameworks */,
@@ -212,7 +212,7 @@
 			);
 			dependencies = (
 			);
-			name = "Spectrum Analyzer";
+			name = TestApp;
 			productName = "Spectrum Analyzer";
 			productReference = 3C16DFA514C7BBFD002162F4 /* Spectrum Analyzer.app */;
 			productType = "com.apple.product-type.application";
@@ -244,7 +244,7 @@
 			);
 			projectRoot = "";
 			targets = (
-				3C16DFA414C7BBFD002162F4 /* Spectrum Analyzer */,
+				3C16DFA414C7BBFD002162F4 /* TestApp */,
 			);
 		};
 /* End PBXProject section */
@@ -282,7 +282,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				3C16DFB614C7BBFD002162F4 /* main.m in Sources */,
-				3C16DFBD14C7BBFD002162F4 /* AppDelegate.m in Sources */,
 				3C16DFD314C7C50B002162F4 /* BusPirate.m in Sources */,
 				3C67822314CBA2A500837156 /* Chipkit.m in Sources */,
 				3C67822714CBB1CB00837156 /* LMX_PLL.m in Sources */,
@@ -290,6 +289,7 @@
 				3C67822D14CC076000837156 /* AD_DDS.m in Sources */,
 				3C429D0614D5C85D00DC2F64 /* ADC.m in Sources */,
 				3CEBBDFA14DC9D9E0045F1DE /* SpectrumAnalyzer.m in Sources */,
+				3C22772E14E0B03600F29768 /* TestAppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -402,7 +402,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3C16DFC314C7BBFD002162F4 /* Build configuration list for PBXNativeTarget "Spectrum Analyzer" */ = {
+		3C16DFC314C7BBFD002162F4 /* Build configuration list for PBXNativeTarget "TestApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3C16DFC414C7BBFD002162F4 /* Debug */,
