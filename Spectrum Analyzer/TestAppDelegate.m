@@ -6,13 +6,13 @@
 //  Copyright (c) 2012. All rights reserved.
 //
 
-#import "AppDelegate.h"
+#import "TestAppDelegate.h"
 
 #define REF_CLOCK 64
 
 void loadComboBoxForPLL(NSComboBox *box);
 
-@implementation AppDelegate
+@implementation TestAppDelegate
 
 @synthesize window = _window;
 

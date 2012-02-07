@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "SpectrumAnalyzer.h"
 
-@interface AppDelegate : NSObject <NSApplicationDelegate,
+@interface TestAppDelegate : NSObject <NSApplicationDelegate,
                                    NSTextFieldDelegate,
                                    NSComboBoxDelegate,
                                    SpectrumAnalyerDelegate>
