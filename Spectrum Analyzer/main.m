@@ -2,7 +2,7 @@
 //  main.m
 //  Spectrum Analyzer
 //
-//  Created by William Dillon on 1/18/12.
+//  Created by William Dillon on 2/6/12.
 //  Copyright (c) 2012. All rights reserved.
 //
 
