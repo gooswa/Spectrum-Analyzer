@@ -7,14 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3C12545814E2222600D3A966 /* SpectrumView.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C12545714E2222600D3A966 /* SpectrumView.m */; };
 		3C16DFAA14C7BBFD002162F4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C16DFA914C7BBFD002162F4 /* Cocoa.framework */; };
 		3C16DFB414C7BBFD002162F4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3C16DFB214C7BBFD002162F4 /* InfoPlist.strings */; };
 		3C16DFB614C7BBFD002162F4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C16DFB514C7BBFD002162F4 /* main.m */; };
 		3C16DFBA14C7BBFD002162F4 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 3C16DFB814C7BBFD002162F4 /* Credits.rtf */; };
-		3C16DFC014C7BBFD002162F4 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C16DFBE14C7BBFD002162F4 /* MainMenu.xib */; };
+		3C16DFC014C7BBFD002162F4 /* TestAppMainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C16DFBE14C7BBFD002162F4 /* TestAppMainMenu.xib */; };
 		3C16DFD014C7C4A8002162F4 /* SerialPort.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C16DFCF14C7C495002162F4 /* SerialPort.framework */; };
 		3C16DFD314C7C50B002162F4 /* BusPirate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C16DFD214C7C50B002162F4 /* BusPirate.m */; };
 		3C22772E14E0B03600F29768 /* TestAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C22772D14E0B03600F29768 /* TestAppDelegate.m */; };
+		3C22773514E0B1F700F29768 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C16DFA914C7BBFD002162F4 /* Cocoa.framework */; };
+		3C22773B14E0B1F700F29768 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3C22773914E0B1F700F29768 /* InfoPlist.strings */; };
+		3C22773D14E0B1F700F29768 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C22773C14E0B1F700F29768 /* main.m */; };
+		3C22774114E0B1F700F29768 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 3C22773F14E0B1F700F29768 /* Credits.rtf */; };
+		3C22774414E0B1F700F29768 /* Document.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C22774314E0B1F700F29768 /* Document.m */; };
+		3C22774714E0B1F700F29768 /* Document.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C22774514E0B1F700F29768 /* Document.xib */; };
+		3C22774A14E0B1F700F29768 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C22774814E0B1F700F29768 /* MainMenu.xib */; };
+		3C22774F14E0B27300F29768 /* SpectrumAnalyzer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CEBBDF914DC9D9E0045F1DE /* SpectrumAnalyzer.m */; };
+		3C22775014E0B27300F29768 /* TestAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C22772D14E0B03600F29768 /* TestAppDelegate.m */; };
+		3C22775114E0B27300F29768 /* LMX_PLL.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822614CBB1CB00837156 /* LMX_PLL.m */; };
+		3C22775214E0B27300F29768 /* AD_DDS.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822C14CC076000837156 /* AD_DDS.m */; };
+		3C22775314E0B27300F29768 /* ADC.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C429D0514D5C85D00DC2F64 /* ADC.m */; };
+		3C22775414E0B27300F29768 /* HardwareInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822914CBC61000837156 /* HardwareInterface.m */; };
+		3C22775514E0B27300F29768 /* BusPirate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C16DFD214C7C50B002162F4 /* BusPirate.m */; };
+		3C22775614E0B27300F29768 /* Chipkit.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822214CBA2A500837156 /* Chipkit.m */; };
+		3C22775714E0B27C00F29768 /* SerialPort.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C16DFCF14C7C495002162F4 /* SerialPort.framework */; };
 		3C429D0614D5C85D00DC2F64 /* ADC.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C429D0514D5C85D00DC2F64 /* ADC.m */; };
 		3C67822314CBA2A500837156 /* Chipkit.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822214CBA2A500837156 /* Chipkit.m */; };
 		3C67822714CBB1CB00837156 /* LMX_PLL.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822614CBB1CB00837156 /* LMX_PLL.m */; };
@@ -38,22 +55,34 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		3C16DFA514C7BBFD002162F4 /* Spectrum Analyzer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Spectrum Analyzer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3C12545614E2222600D3A966 /* SpectrumView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpectrumView.h; sourceTree = "<group>"; };
+		3C12545714E2222600D3A966 /* SpectrumView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpectrumView.m; sourceTree = "<group>"; };
+		3C16DFA514C7BBFD002162F4 /* TestApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TestApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C16DFA914C7BBFD002162F4 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		3C16DFAC14C7BBFD002162F4 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		3C16DFAD14C7BBFD002162F4 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		3C16DFAE14C7BBFD002162F4 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		3C16DFB114C7BBFD002162F4 /* Spectrum Analyzer-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Spectrum Analyzer-Info.plist"; sourceTree = "<group>"; };
+		3C16DFB114C7BBFD002162F4 /* TestApp-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "TestApp-Info.plist"; sourceTree = "<group>"; };
 		3C16DFB314C7BBFD002162F4 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		3C16DFB514C7BBFD002162F4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		3C16DFB714C7BBFD002162F4 /* Spectrum Analyzer-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Spectrum Analyzer-Prefix.pch"; sourceTree = "<group>"; };
 		3C16DFB914C7BBFD002162F4 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
 		3C16DFBB14C7BBFD002162F4 /* TestAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestAppDelegate.h; sourceTree = "<group>"; };
-		3C16DFBF14C7BBFD002162F4 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		3C16DFBF14C7BBFD002162F4 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/TestAppMainMenu.xib; sourceTree = "<group>"; };
 		3C16DFC714C7C495002162F4 /* SerialPort.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SerialPort.xcodeproj; path = ../frameworks/SerialPort/SerialPort.xcodeproj; sourceTree = "<group>"; };
 		3C16DFD114C7C50B002162F4 /* BusPirate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BusPirate.h; sourceTree = "<group>"; };
 		3C16DFD214C7C50B002162F4 /* BusPirate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BusPirate.m; sourceTree = "<group>"; };
 		3C22772D14E0B03600F29768 /* TestAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TestAppDelegate.m; sourceTree = "<group>"; };
+		3C22773314E0B1F700F29768 /* Spectrum Analyzer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Spectrum Analyzer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3C22773814E0B1F700F29768 /* Spectrum Analyzer-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Spectrum Analyzer-Info.plist"; sourceTree = "<group>"; };
+		3C22773A14E0B1F700F29768 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		3C22773C14E0B1F700F29768 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		3C22773E14E0B1F700F29768 /* Spectrum Analyzer-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Spectrum Analyzer-Prefix.pch"; sourceTree = "<group>"; };
+		3C22774014E0B1F700F29768 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
+		3C22774214E0B1F700F29768 /* Document.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Document.h; sourceTree = "<group>"; };
+		3C22774314E0B1F700F29768 /* Document.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Document.m; sourceTree = "<group>"; };
+		3C22774614E0B1F700F29768 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/Document.xib; sourceTree = "<group>"; };
+		3C22774914E0B1F700F29768 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		3C429D0414D5C85D00DC2F64 /* ADC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ADC.h; sourceTree = "<group>"; };
 		3C429D0514D5C85D00DC2F64 /* ADC.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ADC.m; sourceTree = "<group>"; };
 		3C67822114CBA2A500837156 /* Chipkit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Chipkit.h; sourceTree = "<group>"; };
@@ -65,8 +94,8 @@
 		3C67822B14CC076000837156 /* AD_DDS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AD_DDS.h; sourceTree = "<group>"; };
 		3C67822C14CC076000837156 /* AD_DDS.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AD_DDS.m; sourceTree = "<group>"; };
 		3CEBBDF614DC9D000045F1DE /* MSA_version116_4q.bas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = MSA_version116_4q.bas; sourceTree = "<group>"; };
-		3CEBBDF814DC9D9E0045F1DE /* SpectrumAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpectrumAnalyzer.h; sourceTree = "<group>"; };
-		3CEBBDF914DC9D9E0045F1DE /* SpectrumAnalyzer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpectrumAnalyzer.m; sourceTree = "<group>"; };
+		3CEBBDF814DC9D9E0045F1DE /* SpectrumAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SpectrumAnalyzer.h; path = "Spectrum Analyzer/SpectrumAnalyzer.h"; sourceTree = "<group>"; };
+		3CEBBDF914DC9D9E0045F1DE /* SpectrumAnalyzer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SpectrumAnalyzer.m; path = "Spectrum Analyzer/SpectrumAnalyzer.m"; sourceTree = "<group>"; };
 		3CEBBE1014DCAEE50045F1DE /* notes.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = notes.txt; sourceTree = "<group>"; };
 		3CEBBE1214DCB07D0045F1DE /* decimate-basic.bas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "decimate-basic.bas"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
 		3CEBBE1414DCB82F0045F1DE /* ModuleDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ModuleDelegate.h; sourceTree = "<group>"; };
@@ -83,14 +112,34 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3C22773014E0B1F700F29768 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C22773514E0B1F700F29768 /* Cocoa.framework in Frameworks */,
+				3C22775714E0B27C00F29768 /* SerialPort.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3C12545514E221C100D3A966 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				3C12545614E2222600D3A966 /* SpectrumView.h */,
+				3C12545714E2222600D3A966 /* SpectrumView.m */,
+			);
+			name = Views;
+			sourceTree = "<group>";
+		};
 		3C16DF9A14C7BBFD002162F4 = {
 			isa = PBXGroup;
 			children = (
 				3C16DFC714C7C495002162F4 /* SerialPort.xcodeproj */,
-				3C16DFAF14C7BBFD002162F4 /* Spectrum Analyzer */,
+				3C22775814E0B29900F29768 /* Shared */,
+				3C16DFAF14C7BBFD002162F4 /* Test App */,
+				3C22773614E0B1F700F29768 /* Application */,
 				3C16DFA814C7BBFD002162F4 /* Frameworks */,
 				3C16DFA614C7BBFD002162F4 /* Products */,
 			);
@@ -99,7 +148,8 @@
 		3C16DFA614C7BBFD002162F4 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3C16DFA514C7BBFD002162F4 /* Spectrum Analyzer.app */,
+				3C16DFA514C7BBFD002162F4 /* TestApp.app */,
+				3C22773314E0B1F700F29768 /* Spectrum Analyzer.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -123,26 +173,22 @@
 			name = "Other Frameworks";
 			sourceTree = "<group>";
 		};
-		3C16DFAF14C7BBFD002162F4 /* Spectrum Analyzer */ = {
+		3C16DFAF14C7BBFD002162F4 /* Test App */ = {
 			isa = PBXGroup;
 			children = (
-				3CEBBDF814DC9D9E0045F1DE /* SpectrumAnalyzer.h */,
-				3CEBBDF914DC9D9E0045F1DE /* SpectrumAnalyzer.m */,
 				3C16DFBB14C7BBFD002162F4 /* TestAppDelegate.h */,
 				3C22772D14E0B03600F29768 /* TestAppDelegate.m */,
-				3CEBBDF514DC9CEE0045F1DE /* Resources */,
-				3C67822414CBB1AD00837156 /* Module Drivers */,
-				3C16DFC614C7BC2D002162F4 /* Hardware interface */,
-				3C16DFBE14C7BBFD002162F4 /* MainMenu.xib */,
+				3C16DFBE14C7BBFD002162F4 /* TestAppMainMenu.xib */,
 				3C16DFB014C7BBFD002162F4 /* Supporting Files */,
 			);
+			name = "Test App";
 			path = "Spectrum Analyzer";
 			sourceTree = "<group>";
 		};
 		3C16DFB014C7BBFD002162F4 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				3C16DFB114C7BBFD002162F4 /* Spectrum Analyzer-Info.plist */,
+				3C16DFB114C7BBFD002162F4 /* TestApp-Info.plist */,
 				3C16DFB214C7BBFD002162F4 /* InfoPlist.strings */,
 				3C16DFB514C7BBFD002162F4 /* main.m */,
 				3C16DFB714C7BBFD002162F4 /* Spectrum Analyzer-Prefix.pch */,
@@ -162,6 +208,7 @@
 				3C67822214CBA2A500837156 /* Chipkit.m */,
 			);
 			name = "Hardware interface";
+			path = "Spectrum Analyzer";
 			sourceTree = "<group>";
 		};
 		3C16DFC814C7C495002162F4 /* Products */ = {
@@ -170,6 +217,44 @@
 				3C16DFCF14C7C495002162F4 /* SerialPort.framework */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		3C22773614E0B1F700F29768 /* Application */ = {
+			isa = PBXGroup;
+			children = (
+				3C12545514E221C100D3A966 /* Views */,
+				3C22774214E0B1F700F29768 /* Document.h */,
+				3C22774314E0B1F700F29768 /* Document.m */,
+				3C22774514E0B1F700F29768 /* Document.xib */,
+				3C22774814E0B1F700F29768 /* MainMenu.xib */,
+				3C22773714E0B1F700F29768 /* Supporting Files */,
+			);
+			name = Application;
+			path = "Spectrum Analyzer";
+			sourceTree = "<group>";
+		};
+		3C22773714E0B1F700F29768 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				3C22773814E0B1F700F29768 /* Spectrum Analyzer-Info.plist */,
+				3C22773914E0B1F700F29768 /* InfoPlist.strings */,
+				3C22773C14E0B1F700F29768 /* main.m */,
+				3C22773E14E0B1F700F29768 /* Spectrum Analyzer-Prefix.pch */,
+				3C22773F14E0B1F700F29768 /* Credits.rtf */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		3C22775814E0B29900F29768 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				3CEBBDF514DC9CEE0045F1DE /* Resources */,
+				3C67822414CBB1AD00837156 /* Module Drivers */,
+				3C16DFC614C7BC2D002162F4 /* Hardware interface */,
+				3CEBBDF814DC9D9E0045F1DE /* SpectrumAnalyzer.h */,
+				3CEBBDF914DC9D9E0045F1DE /* SpectrumAnalyzer.m */,
+			);
+			name = Shared;
 			sourceTree = "<group>";
 		};
 		3C67822414CBB1AD00837156 /* Module Drivers */ = {
@@ -185,6 +270,7 @@
 				3CEBBE1414DCB82F0045F1DE /* ModuleDelegate.h */,
 			);
 			name = "Module Drivers";
+			path = "Spectrum Analyzer";
 			sourceTree = "<group>";
 		};
 		3CEBBDF514DC9CEE0045F1DE /* Resources */ = {
@@ -195,6 +281,7 @@
 				3CEBBE1014DCAEE50045F1DE /* notes.txt */,
 			);
 			name = Resources;
+			path = "Spectrum Analyzer";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -214,7 +301,24 @@
 			);
 			name = TestApp;
 			productName = "Spectrum Analyzer";
-			productReference = 3C16DFA514C7BBFD002162F4 /* Spectrum Analyzer.app */;
+			productReference = 3C16DFA514C7BBFD002162F4 /* TestApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+		3C22773214E0B1F700F29768 /* Spectrum Analyzer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3C22774B14E0B1F700F29768 /* Build configuration list for PBXNativeTarget "Spectrum Analyzer" */;
+			buildPhases = (
+				3C22772F14E0B1F700F29768 /* Sources */,
+				3C22773014E0B1F700F29768 /* Frameworks */,
+				3C22773114E0B1F700F29768 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Spectrum Analyzer";
+			productName = "Spectrum Analyzer";
+			productReference = 3C22773314E0B1F700F29768 /* Spectrum Analyzer.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -245,6 +349,7 @@
 			projectRoot = "";
 			targets = (
 				3C16DFA414C7BBFD002162F4 /* TestApp */,
+				3C22773214E0B1F700F29768 /* Spectrum Analyzer */,
 			);
 		};
 /* End PBXProject section */
@@ -266,11 +371,22 @@
 			files = (
 				3C16DFB414C7BBFD002162F4 /* InfoPlist.strings in Resources */,
 				3C16DFBA14C7BBFD002162F4 /* Credits.rtf in Resources */,
-				3C16DFC014C7BBFD002162F4 /* MainMenu.xib in Resources */,
+				3C16DFC014C7BBFD002162F4 /* TestAppMainMenu.xib in Resources */,
 				3CEBBDF714DC9D000045F1DE /* MSA_version116_4q.bas in Resources */,
 				3CEBBE1114DCAEE50045F1DE /* notes.txt in Resources */,
 				3CEBBE1314DCB07D0045F1DE /* decimate-basic.bas in Resources */,
 				3CEBBE2114DDA5F40045F1DE /* lmx2326.pdf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3C22773114E0B1F700F29768 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C22773B14E0B1F700F29768 /* InfoPlist.strings in Resources */,
+				3C22774114E0B1F700F29768 /* Credits.rtf in Resources */,
+				3C22774714E0B1F700F29768 /* Document.xib in Resources */,
+				3C22774A14E0B1F700F29768 /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -293,6 +409,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3C22772F14E0B1F700F29768 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C22773D14E0B1F700F29768 /* main.m in Sources */,
+				3C22774414E0B1F700F29768 /* Document.m in Sources */,
+				3C22774F14E0B27300F29768 /* SpectrumAnalyzer.m in Sources */,
+				3C22775014E0B27300F29768 /* TestAppDelegate.m in Sources */,
+				3C22775114E0B27300F29768 /* LMX_PLL.m in Sources */,
+				3C22775214E0B27300F29768 /* AD_DDS.m in Sources */,
+				3C22775314E0B27300F29768 /* ADC.m in Sources */,
+				3C22775414E0B27300F29768 /* HardwareInterface.m in Sources */,
+				3C22775514E0B27300F29768 /* BusPirate.m in Sources */,
+				3C22775614E0B27300F29768 /* Chipkit.m in Sources */,
+				3C12545814E2222600D3A966 /* SpectrumView.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
@@ -312,10 +446,42 @@
 			name = Credits.rtf;
 			sourceTree = "<group>";
 		};
-		3C16DFBE14C7BBFD002162F4 /* MainMenu.xib */ = {
+		3C16DFBE14C7BBFD002162F4 /* TestAppMainMenu.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
 				3C16DFBF14C7BBFD002162F4 /* en */,
+			);
+			name = TestAppMainMenu.xib;
+			sourceTree = "<group>";
+		};
+		3C22773914E0B1F700F29768 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3C22773A14E0B1F700F29768 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		3C22773F14E0B1F700F29768 /* Credits.rtf */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3C22774014E0B1F700F29768 /* en */,
+			);
+			name = Credits.rtf;
+			sourceTree = "<group>";
+		};
+		3C22774514E0B1F700F29768 /* Document.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3C22774614E0B1F700F29768 /* en */,
+			);
+			name = Document.xib;
+			sourceTree = "<group>";
+		};
+		3C22774814E0B1F700F29768 /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3C22774914E0B1F700F29768 /* en */,
 			);
 			name = MainMenu.xib;
 			sourceTree = "<group>";
@@ -373,7 +539,7 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Spectrum Analyzer/Spectrum Analyzer-Prefix.pch";
-				INFOPLIST_FILE = "Spectrum Analyzer/Spectrum Analyzer-Info.plist";
+				INFOPLIST_FILE = "Spectrum Analyzer/TestApp-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -382,6 +548,30 @@
 		3C16DFC514C7BBFD002162F4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Spectrum Analyzer/Spectrum Analyzer-Prefix.pch";
+				INFOPLIST_FILE = "Spectrum Analyzer/TestApp-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		3C22774C14E0B1F700F29768 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Spectrum Analyzer/Spectrum Analyzer-Prefix.pch";
+				INFOPLIST_FILE = "Spectrum Analyzer/Spectrum Analyzer-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		3C22774D14E0B1F700F29768 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Spectrum Analyzer/Spectrum Analyzer-Prefix.pch";
 				INFOPLIST_FILE = "Spectrum Analyzer/Spectrum Analyzer-Info.plist";
@@ -407,6 +597,15 @@
 			buildConfigurations = (
 				3C16DFC414C7BBFD002162F4 /* Debug */,
 				3C16DFC514C7BBFD002162F4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3C22774B14E0B1F700F29768 /* Build configuration list for PBXNativeTarget "Spectrum Analyzer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3C22774C14E0B1F700F29768 /* Debug */,
+				3C22774D14E0B1F700F29768 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
