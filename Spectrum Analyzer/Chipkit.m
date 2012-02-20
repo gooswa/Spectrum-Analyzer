@@ -103,7 +103,7 @@ void hexToString(char *string, int len, uint64 hex) {
     snprintf(buffer, 256, "$s,%ld,%ld,%ld,%d,%s\r",
              CSPin, dataPin, clockPin, bytes, hexBuffer);
     
-    printf("Writing \"%s\" to the analyzer.", buffer);
+//    printf("Writing \"%s\" to the analyzer.", buffer);
     
     // Send to the device
     [port putString:[NSString stringWithCString:buffer encoding:NSUTF8StringEncoding]];

@@ -238,6 +238,67 @@
     return results;
 }
 
+- (AnalyzerSample_t *)scanWithPLO:(LMX_PLL *)plo
+                         fromFreq:(float)startFreq
+                           toFreq:(float)stopFreq
+                        withSteps:(NSInteger)steps
+                         andDelay:(NSInteger)mS
+{
+    double mag, phase;
+    
+    // We want to make sure that we actually hit the last frequency
+    // therefore, we want to subtract one from the steps.
+    double deltaFreq = (stopFreq - startFreq) / (float)(steps - 1);
+    
+    AnalyzerSample_t *results;
+    results = (AnalyzerSample_t *)malloc(sizeof(AnalyzerSample_t) * steps);
+    if (!results) {
+        return nil;
+    }
+    
+    for (int i = 0; i < steps; i++) {
+        double freq = startFreq + (deltaFreq * i);
+
+        inhibit_callbacks = YES;
+
+        // Because we can only tune PLO1 in .97 (PLO1.phaseFreq) steps,
+        // we need to approximate the LO1 tuning value.
+        PLO1.refFreq = IF2;
+        PLO1.outputFreq = freq;
+        
+        // Now, PLO1 is "stale" (which means that its software representation
+        // doesn't match the hardware.  That's OK because we only want the
+        // calculated tuning value.
+        double PLO1_error = freq - PLO1.outputFreq;
+        
+        // Next, using the frequency error, we can figure out a new fine tuning
+        // of the DDS to make the PLO1 output frequency very close to desired
+        double correctedDDS1 = IF2 + (PLO1_error/PLO1.n_divider) * PLO1.r_divider;
+        DDS1.outputFreq = correctedDDS1;
+        PLO1.refFreq = DDS1.outputFreq;
+        [DDS1 updateHardware:interface];
+        [PLO1 updateHardware:interface];
+
+        inhibit_callbacks = NO;
+        
+        [adc sampleCount:1
+                   Delay:mS
+                     Mag:&mag Phase:&phase
+               Interface:interface];
+
+//        printf("Tried to tune the analyzer to %f, achieved %f.  Error of %f hz.\n",
+//               freq,
+//               PLO1.outputFreq,
+//               (freq - PLO1.outputFreq) * 1000000);        
+
+        results[i].frequency = PLO1.outputFreq;
+        results[i].magnitude = mag;
+        results[i].phase = phase;
+    }
+    
+    return results;
+}
+
 
 
 -(void)moduleWillUpdateHardware:(id)sender

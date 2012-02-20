@@ -231,12 +231,79 @@ void loadComboBoxForPLL(NSComboBox *box)
     }
 }
 
+-(void)PLO1_Scan:(id)sender
+{
+    AnalyzerSample_t *results = [analyzer scanWithPLO:[analyzer PLO1]
+                                             fromFreq:[PLO_start doubleValue]
+                                               toFreq:[PLO_stop  doubleValue]
+                                            withSteps:[PLO_steps intValue]
+                                             andDelay:[PLO_delay intValue]];
+    
+    // Make sure it worked.  If it did, pop up a window to save the CSV
+    // file to disk somewhere.  Eventually we should be able to make a graph
+    if (results) {
+        // Open the save file as dialog box, concrrent with string processing
+        NSSavePanel *savePanel = [NSSavePanel savePanel];
+        [savePanel setCanSelectHiddenExtension:YES];
+        [savePanel setTitle:@"Save as a CSV"];
+        [savePanel setPrompt:@"Save"];
+        NSInteger result = [savePanel runModal];        
+        
+        // Get the result of the users selection
+        if (result == NSFileHandlingPanelOKButton) {
+            NSError *error = nil;
+            
+            // Create an NSString with the CSV data
+            NSMutableString *tempString = [[NSMutableString alloc] init];
+            for (int i = 0; i < [PLO_steps intValue]; i++) {
+                [tempString appendFormat:@"%f,%f,%f\n",
+                 results[i].frequency,
+                 results[i].magnitude,
+                 results[i].phase];
+            }
+            
+            // Save the CSV into the file
+            bool result = [tempString writeToURL:[savePanel URL]
+                                      atomically:NO
+                                        encoding:NSUTF8StringEncoding
+                                           error:&error];
+            
+            [tempString release];
+            
+            // Pop-up a status message
+            NSAlert *completionAlert = [[NSAlert alloc] init];
+            [completionAlert addButtonWithTitle:@"OK"];
+            
+            if (result == NO) {
+                NSLog(@"Unable to save log CSV to %@: %@",
+                      [savePanel URL], [error localizedDescription]);
+                
+                NSString *errorString;
+                errorString = [NSString stringWithFormat:@"Error saving file: %@",
+                               [error localizedDescription]];
+                
+                [completionAlert setMessageText:@"Unable to save"];
+                [completionAlert setMessageText:errorString];
+                [completionAlert setAlertStyle:NSWarningAlertStyle];
+            } else {
+                [completionAlert setMessageText:@"File saved"];
+                [completionAlert setMessageText:@"Cluster log saved"];
+                [completionAlert setAlertStyle:NSInformationalAlertStyle];			
+            }
+            
+            [completionAlert runModal];
+            [completionAlert release];
+        }
+    }
+    
+}
+
 -(void)Sweep_go:(id)sender
 {
-    AnalyzerSample_t *results = [analyzer scanFrom:[Sweep_start doubleValue]
-                                                To:[Sweep_stop  doubleValue]
-                                         withSteps:[Sweep_steps intValue]
-                                          andDelay:[Sweep_delay intValue]];
+    AnalyzerSample_t *results = [analyzer scanWithPLO:[Sweep_start doubleValue]
+                                                   To:[Sweep_stop  doubleValue]
+                                            withSteps:[Sweep_steps intValue]
+                                             andDelay:[Sweep_delay intValue]];
     
     // Make sure it worked.  If it did, pop up a window to save the CSV
     // file to disk somewhere.  Eventually we should be able to make a graph

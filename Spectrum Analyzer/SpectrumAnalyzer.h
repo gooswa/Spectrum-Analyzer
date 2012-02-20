@@ -79,5 +79,15 @@ typedef struct {
                         withSteps:(NSInteger)steps
                          andDelay:(NSInteger)mS;
 
+// This is more of a diagnostics method.  It will
+// execute a scan using the PLO module.  It will
+// collect ADC data using the magnitude and phase
+// ADCs.
+- (AnalyzerSample_t *)scanWithPLO:(LMX_PLL *)plo
+                         fromFreq:(float)startFreq
+                           toFreq:(float)endFreq
+                        withSteps:(NSInteger)steps
+                         andDelay:(NSInteger)mS;
+
 
 @end

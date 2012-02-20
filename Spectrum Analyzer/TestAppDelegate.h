@@ -39,6 +39,11 @@
     IBOutlet NSTextField *DDS_steps;
     IBOutlet NSTextField *DDS_delay;
 
+    IBOutlet NSTextField *PLO_start;
+    IBOutlet NSTextField *PLO_stop;
+    IBOutlet NSTextField *PLO_steps;
+    IBOutlet NSTextField *PLO_delay;
+    
     IBOutlet NSTextField *Sweep_start;
     IBOutlet NSTextField *Sweep_stop;
     IBOutlet NSTextField *Sweep_steps;
@@ -53,6 +58,7 @@
 
 - (IBAction)ADC_go:(id)sender;
 - (IBAction)DDS1_Scan:(id)sender;
+- (IBAction)PLO1_Scan:(id)sender;
 - (IBAction)Sweep_go:(id)sender;
 
 - (IBAction)invertChanged:(id)sender;
