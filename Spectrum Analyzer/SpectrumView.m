@@ -26,7 +26,7 @@
 {
     [[NSColor blackColor] set];
 
-    float borderWidth = 20;
+    float borderWidth = 0;
     float halfBorderWidth = 0.5 * borderWidth;
     NSRect borderRect = NSInsetRect([self bounds],
                                     halfBorderWidth,
