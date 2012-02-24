@@ -32,6 +32,7 @@
 		3C22775514E0B27300F29768 /* BusPirate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C16DFD214C7C50B002162F4 /* BusPirate.m */; };
 		3C22775614E0B27300F29768 /* Chipkit.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822214CBA2A500837156 /* Chipkit.m */; };
 		3C22775714E0B27C00F29768 /* SerialPort.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C16DFCF14C7C495002162F4 /* SerialPort.framework */; };
+		3C30149A14F7314F008D9DD9 /* SpectrumController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C30149914F7314F008D9DD9 /* SpectrumController.m */; };
 		3C429D0614D5C85D00DC2F64 /* ADC.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C429D0514D5C85D00DC2F64 /* ADC.m */; };
 		3C67822314CBA2A500837156 /* Chipkit.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822214CBA2A500837156 /* Chipkit.m */; };
 		3C67822714CBB1CB00837156 /* LMX_PLL.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C67822614CBB1CB00837156 /* LMX_PLL.m */; };
@@ -83,6 +84,8 @@
 		3C22774314E0B1F700F29768 /* Document.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Document.m; sourceTree = "<group>"; };
 		3C22774614E0B1F700F29768 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/Document.xib; sourceTree = "<group>"; };
 		3C22774914E0B1F700F29768 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		3C30149814F7314F008D9DD9 /* SpectrumController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpectrumController.h; sourceTree = "<group>"; };
+		3C30149914F7314F008D9DD9 /* SpectrumController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpectrumController.m; sourceTree = "<group>"; };
 		3C429D0414D5C85D00DC2F64 /* ADC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ADC.h; sourceTree = "<group>"; };
 		3C429D0514D5C85D00DC2F64 /* ADC.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ADC.m; sourceTree = "<group>"; };
 		3C67822114CBA2A500837156 /* Chipkit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Chipkit.h; sourceTree = "<group>"; };
@@ -222,6 +225,7 @@
 		3C22773614E0B1F700F29768 /* Application */ = {
 			isa = PBXGroup;
 			children = (
+				3C30149714F72194008D9DD9 /* Controller */,
 				3C12545514E221C100D3A966 /* Views */,
 				3C22774214E0B1F700F29768 /* Document.h */,
 				3C22774314E0B1F700F29768 /* Document.m */,
@@ -255,6 +259,15 @@
 				3CEBBDF914DC9D9E0045F1DE /* SpectrumAnalyzer.m */,
 			);
 			name = Shared;
+			sourceTree = "<group>";
+		};
+		3C30149714F72194008D9DD9 /* Controller */ = {
+			isa = PBXGroup;
+			children = (
+				3C30149814F7314F008D9DD9 /* SpectrumController.h */,
+				3C30149914F7314F008D9DD9 /* SpectrumController.m */,
+			);
+			name = Controller;
 			sourceTree = "<group>";
 		};
 		3C67822414CBB1AD00837156 /* Module Drivers */ = {
@@ -406,6 +419,7 @@
 				3C429D0614D5C85D00DC2F64 /* ADC.m in Sources */,
 				3CEBBDFA14DC9D9E0045F1DE /* SpectrumAnalyzer.m in Sources */,
 				3C22772E14E0B03600F29768 /* TestAppDelegate.m in Sources */,
+				3C30149A14F7314F008D9DD9 /* SpectrumController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
