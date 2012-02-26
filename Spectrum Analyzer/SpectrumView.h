@@ -9,9 +9,11 @@
 #import <Cocoa/Cocoa.h>
 
 @class Document;
+@class SpectrumController;
 
 @interface SpectrumView : NSView
 {
+    IBOutlet SpectrumController *controller;
     IBOutlet Document *document;
 }
 

@@ -206,7 +206,6 @@
 						<string key="NSFrame">{{195, 19}, {22, 18}}</string>
 						<reference key="NSSuperview" ref="1008547555"/>
 						<reference key="NSWindow"/>
-						<reference key="NSNextKeyView"/>
 						<string key="NSReuseIdentifierKey">_NS:771</string>
 						<bool key="NSEnabled">YES</bool>
 						<object class="NSButtonCell" key="NSCell" id="1065159898">
@@ -301,7 +300,7 @@
 					<object class="NSButton" id="916801116">
 						<reference key="NSNextResponder" ref="1008547555"/>
 						<int key="NSvFlags">292</int>
-						<string key="NSFrame">{{195, 48}, {22, 18}}</string>
+						<string key="NSFrame">{{195, 47}, {22, 18}}</string>
 						<reference key="NSSuperview" ref="1008547555"/>
 						<reference key="NSWindow"/>
 						<reference key="NSNextKeyView" ref="98201145"/>
@@ -327,7 +326,7 @@
 					<object class="NSButton" id="1044887787">
 						<reference key="NSNextResponder" ref="1008547555"/>
 						<int key="NSvFlags">292</int>
-						<string key="NSFrame">{{195, 75}, {22, 18}}</string>
+						<string key="NSFrame">{{195, 77}, {22, 18}}</string>
 						<reference key="NSSuperview" ref="1008547555"/>
 						<reference key="NSWindow"/>
 						<reference key="NSNextKeyView" ref="1054684107"/>
@@ -764,7 +763,6 @@
 							<string key="NSFrame">{{221, 0}, {39, 21}}</string>
 							<reference key="NSSuperview" ref="38535056"/>
 							<reference key="NSWindow"/>
-							<reference key="NSNextKeyView"/>
 							<string key="NSReuseIdentifierKey">_NS:2466</string>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="262710377">
@@ -818,7 +816,7 @@
 									<object class="NSButton" id="241670038">
 										<reference key="NSNextResponder" ref="730784211"/>
 										<int key="NSvFlags">268</int>
-										<string key="NSFrame">{{16, 70}, {88, 18}}</string>
+										<string key="NSFrame">{{16, 69}, {88, 18}}</string>
 										<reference key="NSSuperview" ref="730784211"/>
 										<reference key="NSWindow"/>
 										<reference key="NSNextKeyView" ref="1066887846"/>
@@ -972,7 +970,6 @@
 										<string key="NSFrame">{{67, 28}, {90, 22}}</string>
 										<reference key="NSSuperview" ref="970731578"/>
 										<reference key="NSWindow"/>
-										<reference key="NSNextKeyView"/>
 										<string key="NSReuseIdentifierKey">_NS:285</string>
 										<bool key="NSEnabled">YES</bool>
 										<object class="NSTextFieldCell" key="NSCell" id="959720495">
@@ -1268,6 +1265,46 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
+						<string key="label">delegate</string>
+						<reference key="source" ref="216298758"/>
+						<reference key="destination" ref="18673617"/>
+					</object>
+					<int key="connectionID">100149</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">delegate</string>
+						<reference key="source" ref="473030045"/>
+						<reference key="destination" ref="18673617"/>
+					</object>
+					<int key="connectionID">100150</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">delegate</string>
+						<reference key="source" ref="98115055"/>
+						<reference key="destination" ref="18673617"/>
+					</object>
+					<int key="connectionID">100151</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">document</string>
+						<reference key="source" ref="730239046"/>
+						<reference key="destination" ref="512844837"/>
+					</object>
+					<int key="connectionID">100144</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">controller</string>
+						<reference key="source" ref="730239046"/>
+						<reference key="destination" ref="18673617"/>
+					</object>
+					<int key="connectionID">100145</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
 						<string key="label">contentView</string>
 						<reference key="source" ref="60875655"/>
 						<reference key="destination" ref="671021136"/>
@@ -1289,6 +1326,38 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						<reference key="destination" ref="163887228"/>
 					</object>
 					<int key="connectionID">100128</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">delegate</string>
+						<reference key="source" ref="980903302"/>
+						<reference key="destination" ref="18673617"/>
+					</object>
+					<int key="connectionID">100148</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">delegate</string>
+						<reference key="source" ref="376663738"/>
+						<reference key="destination" ref="18673617"/>
+					</object>
+					<int key="connectionID">100146</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">delegate</string>
+						<reference key="source" ref="204933894"/>
+						<reference key="destination" ref="18673617"/>
+					</object>
+					<int key="connectionID">100147</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">delegate</string>
+						<reference key="source" ref="869597864"/>
+						<reference key="destination" ref="18673617"/>
+					</object>
+					<int key="connectionID">100152</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
@@ -1370,6 +1439,94 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					</object>
 					<int key="connectionID">100143</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">stepAutoChange</string>
+						<reference key="source" ref="18673617"/>
+						<reference key="destination" ref="1044887787"/>
+					</object>
+					<int key="connectionID">100157</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">delayAutoChange</string>
+						<reference key="source" ref="18673617"/>
+						<reference key="destination" ref="916801116"/>
+					</object>
+					<int key="connectionID">100158</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">videoFilterAutoChange</string>
+						<reference key="source" ref="18673617"/>
+						<reference key="destination" ref="767643874"/>
+					</object>
+					<int key="connectionID">100159</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">tgModeChange</string>
+						<reference key="source" ref="18673617"/>
+						<reference key="destination" ref="90123630"/>
+					</object>
+					<int key="connectionID">100161</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">vAutoScaleChange</string>
+						<reference key="source" ref="18673617"/>
+						<reference key="destination" ref="241670038"/>
+					</object>
+					<int key="connectionID">100162</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">rbwFilterAutoChange:</string>
+						<reference key="source" ref="18673617"/>
+						<reference key="destination" ref="598795747"/>
+					</object>
+					<int key="connectionID">100163</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">stepAutoChange:</string>
+						<reference key="source" ref="18673617"/>
+						<reference key="destination" ref="1044887787"/>
+					</object>
+					<int key="connectionID">100164</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">delayAutoChange:</string>
+						<reference key="source" ref="18673617"/>
+						<reference key="destination" ref="916801116"/>
+					</object>
+					<int key="connectionID">100165</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">videoFilterAutoChange:</string>
+						<reference key="source" ref="18673617"/>
+						<reference key="destination" ref="767643874"/>
+					</object>
+					<int key="connectionID">100166</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">tgModeChange:</string>
+						<reference key="source" ref="18673617"/>
+						<reference key="destination" ref="90123630"/>
+					</object>
+					<int key="connectionID">100167</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">vAutoScaleChange:</string>
+						<reference key="source" ref="18673617"/>
+						<reference key="destination" ref="241670038"/>
+					</object>
+					<int key="connectionID">100168</int>
+				</object>
 			</array>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<array key="orderedObjects">
@@ -1406,7 +1563,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<reference ref="343698577"/>
 							<reference ref="70413652"/>
 							<reference ref="598795747"/>
-							<reference ref="1044887787"/>
 							<reference ref="916801116"/>
 							<reference ref="473030045"/>
 							<reference ref="1054684107"/>
@@ -1415,6 +1571,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<reference ref="98201145"/>
 							<reference ref="869597864"/>
 							<reference ref="584636609"/>
+							<reference ref="1044887787"/>
 						</array>
 						<reference key="parent" ref="0"/>
 						<string key="objectName">Drawer Content View</string>
@@ -2044,7 +2201,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">100143</int>
+			<int key="maxID">100168</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -2100,6 +2257,40 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				<object class="IBPartialClassDescription">
 					<string key="className">SpectrumController</string>
 					<string key="superclassName">NSObject</string>
+					<dictionary class="NSMutableDictionary" key="actions">
+						<string key="delayAutoChange:">id</string>
+						<string key="rbwFilterAutoChange:">id</string>
+						<string key="stepAutoChange:">id</string>
+						<string key="tgModeChange:">id</string>
+						<string key="vAutoScaleChange:">id</string>
+						<string key="videoFilterAutoChange:">id</string>
+					</dictionary>
+					<dictionary class="NSMutableDictionary" key="actionInfosByName">
+						<object class="IBActionInfo" key="delayAutoChange:">
+							<string key="name">delayAutoChange:</string>
+							<string key="candidateClassName">id</string>
+						</object>
+						<object class="IBActionInfo" key="rbwFilterAutoChange:">
+							<string key="name">rbwFilterAutoChange:</string>
+							<string key="candidateClassName">id</string>
+						</object>
+						<object class="IBActionInfo" key="stepAutoChange:">
+							<string key="name">stepAutoChange:</string>
+							<string key="candidateClassName">id</string>
+						</object>
+						<object class="IBActionInfo" key="tgModeChange:">
+							<string key="name">tgModeChange:</string>
+							<string key="candidateClassName">id</string>
+						</object>
+						<object class="IBActionInfo" key="vAutoScaleChange:">
+							<string key="name">vAutoScaleChange:</string>
+							<string key="candidateClassName">id</string>
+						</object>
+						<object class="IBActionInfo" key="videoFilterAutoChange:">
+							<string key="name">videoFilterAutoChange:</string>
+							<string key="candidateClassName">id</string>
+						</object>
+					</dictionary>
 					<dictionary class="NSMutableDictionary" key="outlets">
 						<string key="autoScaleButton">NSButton</string>
 						<string key="delayTextField">NSTextField</string>
@@ -2110,6 +2301,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						<string key="stepTextField">NSTextField</string>
 						<string key="tgModeRadioBox">NSMatrix</string>
 						<string key="topLevelTextField">NSTextField</string>
+						<string key="vAutoScaleChange">NSButton</string>
 						<string key="videoFilterComboBox">NSComboBox</string>
 					</dictionary>
 					<dictionary class="NSMutableDictionary" key="toOneOutletInfosByName">
@@ -2149,6 +2341,10 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string key="name">topLevelTextField</string>
 							<string key="candidateClassName">NSTextField</string>
 						</object>
+						<object class="IBToOneOutletInfo" key="vAutoScaleChange">
+							<string key="name">vAutoScaleChange</string>
+							<string key="candidateClassName">NSButton</string>
+						</object>
 						<object class="IBToOneOutletInfo" key="videoFilterComboBox">
 							<string key="name">videoFilterComboBox</string>
 							<string key="candidateClassName">NSComboBox</string>
@@ -2162,17 +2358,20 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				<object class="IBPartialClassDescription">
 					<string key="className">SpectrumView</string>
 					<string key="superclassName">NSView</string>
-					<object class="NSMutableDictionary" key="outlets">
-						<string key="NS.key.0">document</string>
-						<string key="NS.object.0">Document</string>
-					</object>
-					<object class="NSMutableDictionary" key="toOneOutletInfosByName">
-						<string key="NS.key.0">document</string>
-						<object class="IBToOneOutletInfo" key="NS.object.0">
+					<dictionary class="NSMutableDictionary" key="outlets">
+						<string key="controller">SpectrumController</string>
+						<string key="document">Document</string>
+					</dictionary>
+					<dictionary class="NSMutableDictionary" key="toOneOutletInfosByName">
+						<object class="IBToOneOutletInfo" key="controller">
+							<string key="name">controller</string>
+							<string key="candidateClassName">SpectrumController</string>
+						</object>
+						<object class="IBToOneOutletInfo" key="document">
 							<string key="name">document</string>
 							<string key="candidateClassName">Document</string>
 						</object>
-					</object>
+					</dictionary>
 					<object class="IBClassDescriptionSource" key="sourceIdentifier">
 						<string key="majorKey">IBProjectSource</string>
 						<string key="minorKey">./Classes/SpectrumView.h</string>
