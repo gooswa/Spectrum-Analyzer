@@ -25,6 +25,7 @@ typedef struct {
 @optional
 
 - (void)configurationChanged;
+- (void)sampleCollected:(AnalyzerSample_t)sample atStep:(int)step;
 
 @end
 
@@ -41,6 +42,15 @@ typedef struct {
     
     id <SpectrumAnalyerDelegate> delegate;
     
+    int steps, delayMs;
+    double startFreq, stopFreq;
+    bool scanning;
+    
+    int currentStep;
+    AnalyzerSample_t *samples;
+    
+    dispatch_queue_t scanQueue;
+    
     @private
     BOOL inhibit_callbacks;
 }
@@ -54,6 +64,19 @@ typedef struct {
 @property(readonly) ADC     *adc;
 @property(readonly) HardwareInterface *interface;
 
+@property(readonly) int currentStep;
+@property(readonly) bool scanning;
+
+@property(readonly) double RBW;
+@property(readwrite) int steps;
+@property(readwrite) int delayMs;
+@property(readwrite) double startFreq;
+@property(readwrite) double stopFreq;
+
+// Continuously updated array of samples
+// the size of this array matches the number of steps
+@property(readonly) AnalyzerSample_t *samples;
+
 - (id)initWithInterface:(HardwareInterface *)interface;
 
 // This is the method that's use to tune the entire
@@ -62,32 +85,25 @@ typedef struct {
 // It also assumes the values set for LO1, LO2, etc.
 - (void)tuneTo:(double)frequency;
 
+// Commands to control continuous scanning.
+// The scan once commands stop continuous scanning
+- (void)startScanning;
+- (void)stopScanning;
+
 // This method will perform a sweep using the entire
 // analyzer across a given interval using a given number of steps
-- (AnalyzerSample_t *)scanFrom:(double)startFreq
-                            To:(double)stopFreq
-                     withSteps:(NSInteger)steps
-                      andDelay:(NSInteger)delay;
+- (AnalyzerSample_t *)scanOnce;
 
 // This is more of a diagnostics method.  It will
 // execute a scan using the DDS module.  It will
 // collect ADC data using the magnitude and phase
 // ADCs.
-- (AnalyzerSample_t *)scanWithDDS:(AD_DDS *)dds
-                         fromFreq:(float)startFreq
-                           toFreq:(float)endFreq
-                        withSteps:(NSInteger)steps
-                         andDelay:(NSInteger)mS;
+- (AnalyzerSample_t *)scanOnceWithDDS:(AD_DDS *)dds;
 
 // This is more of a diagnostics method.  It will
 // execute a scan using the PLO module.  It will
 // collect ADC data using the magnitude and phase
 // ADCs.
-- (AnalyzerSample_t *)scanWithPLO:(LMX_PLL *)plo
-                         fromFreq:(float)startFreq
-                           toFreq:(float)endFreq
-                        withSteps:(NSInteger)steps
-                         andDelay:(NSInteger)mS;
-
+- (AnalyzerSample_t *)scanOnceWithPLO:(LMX_PLL *)plo;
 
 @end

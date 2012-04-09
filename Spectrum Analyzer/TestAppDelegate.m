@@ -167,11 +167,11 @@ void loadComboBoxForPLL(NSComboBox *box)
 
 -(IBAction)DDS1_Scan:(id)sender
 {
-    AnalyzerSample_t *results = [analyzer scanWithDDS:[analyzer DDS1]
-                                             fromFreq:[DDS_start doubleValue]
-                                               toFreq:[DDS_stop  doubleValue]
-                                            withSteps:[DDS_steps intValue]
-                                             andDelay:[DDS_delay intValue]];
+    [analyzer setStartFreq:[Sweep_start floatValue]];
+    [analyzer setStopFreq:[Sweep_stop floatValue]];
+    [analyzer setSteps:[Sweep_steps intValue]];
+    [analyzer setDelayMs:[Sweep_delay intValue]];
+    AnalyzerSample_t *results = [analyzer scanOnceWithDDS:[analyzer DDS1]];
     
     // Make sure it worked.  If it did, pop up a window to save the CSV
     // file to disk somewhere.  Eventually we should be able to make a graph
@@ -233,11 +233,11 @@ void loadComboBoxForPLL(NSComboBox *box)
 
 -(void)PLO1_Scan:(id)sender
 {
-    AnalyzerSample_t *results = [analyzer scanWithPLO:[analyzer PLO1]
-                                             fromFreq:[PLO_start doubleValue]
-                                               toFreq:[PLO_stop  doubleValue]
-                                            withSteps:[PLO_steps intValue]
-                                             andDelay:[PLO_delay intValue]];
+    [analyzer setStartFreq:[Sweep_start floatValue]];
+    [analyzer setStopFreq:[Sweep_stop floatValue]];
+    [analyzer setSteps:[Sweep_steps intValue]];
+    [analyzer setDelayMs:[Sweep_delay intValue]];
+    AnalyzerSample_t *results = [analyzer scanOnceWithPLO:[analyzer PLO1]];
     
     // Make sure it worked.  If it did, pop up a window to save the CSV
     // file to disk somewhere.  Eventually we should be able to make a graph
@@ -300,10 +300,11 @@ void loadComboBoxForPLL(NSComboBox *box)
 
 -(void)Sweep_go:(id)sender
 {
-    AnalyzerSample_t *results = [analyzer scanWithPLO:[Sweep_start doubleValue]
-                                                   To:[Sweep_stop  doubleValue]
-                                            withSteps:[Sweep_steps intValue]
-                                             andDelay:[Sweep_delay intValue]];
+    [analyzer setStartFreq:[Sweep_start floatValue]];
+    [analyzer setStopFreq:[Sweep_stop floatValue]];
+    [analyzer setSteps:[Sweep_steps intValue]];
+    [analyzer setDelayMs:[Sweep_delay intValue]];
+    AnalyzerSample_t *results = [analyzer scanOnce];
     
     // Make sure it worked.  If it did, pop up a window to save the CSV
     // file to disk somewhere.  Eventually we should be able to make a graph

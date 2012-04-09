@@ -23,8 +23,15 @@
                             mag:magValue
                           phase:phaseValue];
     } else {
-        *magValue = 0.;
-        *phaseValue = 0.;
+        usleep((int)delay * 1000);
+        
+        float range = ((float)rand() / RAND_MAX) * 500.;
+        
+        // Simulate some values
+        *magValue = 8000 + range;
+        
+        range = ((float)rand() / RAND_MAX) * 250.;
+        *phaseValue = 8192 + range;
     }
     
     return;

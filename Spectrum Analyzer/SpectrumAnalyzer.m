@@ -19,16 +19,35 @@
 @synthesize adc;
 @synthesize interface;
 
+@synthesize RBW;
+@synthesize scanning;
+@synthesize delayMs;
+
+@synthesize samples;
+@synthesize currentStep;
+
 -(id)initWithInterface:(HardwareInterface *)newInterface
 {
     self = [super init];
     if (self) {
-        interface = newInterface;
+        interface = [newInterface retain];
+        
+        scanning = NO;        
         
         IF1 = 1013.3;
         IF2 = 10.7;
         LO2 = 1024;
         RBW = .002;
+        
+        startFreq = -0.3;
+        stopFreq  =  0.3;
+        delayMs = 50;
+
+        // Normally, you aren't supposed to call self in init, but this is OK.
+        currentStep = 0;
+        [self setSteps:300];
+        
+        scanQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
         
         inhibit_callbacks = NO;
         
@@ -67,7 +86,6 @@
         PLO1.FoLD_output = FoLD_NDIV;
         PLO1.invertingCP = YES;
         PLO1.refFreq = 10.7;
-//        PLO1.refFreq = 64;
         PLO1.phaseFreq = 0.972;
         PLO1.outputFreq = 1034;
         [PLO1 setDelegate:(id <ModuleDelegate>*)self];
@@ -101,6 +119,93 @@
     return self;
 }
 
+-(void)dealloc
+{
+    // Stop scannin and release the queue
+    scanning = NO;
+    dispatch_barrier_sync(scanQueue, ^{});
+    dispatch_release(scanQueue);
+
+    if (samples) {
+        free(samples);
+    }
+    
+    [PLO1 release];
+    [PLO2 release];
+    [PLO3 release];
+    [DDS1 release];
+    [DDS3 release];
+    [ADC release];
+    
+    [interface release];
+    
+    [super dealloc];
+}
+
+- (float)calculateDbFromCounts:(float)counts
+{
+    // For now, we're going to do a stupid simple calibration
+    // Assume that 46516 is 0 dBm.
+    // and that the slope of 410 per 1 dB
+    
+    return (counts - 46516.) / 410.;
+}
+
+- (void)setSteps:(int)newSteps
+{
+    bool scan = scanning;
+    
+    if (scan) {
+        [self stopScanning];
+    }
+    
+    steps = newSteps;
+    if (samples) {
+        samples = (AnalyzerSample_t *)realloc(samples, sizeof(AnalyzerSample_t) * steps);
+    } else {
+        samples = (AnalyzerSample_t *)malloc(sizeof(AnalyzerSample_t) * steps);
+    }
+
+    if (scan) {
+        [self startScanning];
+    }
+    
+//    // Sanitize the array
+//    for (int i = 0; i < steps; i++) {
+//        samples[i].magnitude = NAN;
+//        samples[i].phase = NAN;        
+//    }
+}
+
+- (int)steps
+{
+    return steps;
+}
+
+-(void)setStartFreq:(double)newStartFreq
+{
+    [self stopScanning];
+    startFreq = newStartFreq;
+    [self startScanning];
+}
+
+- (void)setStopFreq:(double)newStopFreq
+{
+    [self stopScanning];
+    stopFreq = newStopFreq;
+    [self startScanning];
+}
+
+-(double)startFreq
+{
+    return startFreq;
+}
+
+-(double)stopFreq
+{
+    return stopFreq;
+}
+
 - (void)tuneTo:(double)frequency
 {
     inhibit_callbacks = YES;
@@ -114,12 +219,12 @@
     PLO1.outputFreq = LO1;
     
     // Now, PLO1 is "stale" (which means that its software representation
-    // doesn't match the hardware.  That's OK because we only want the
+    // doesn't match the hardware).  That's OK because we only want the
     // calculated tuning value.
     double PLO1_error = LO1 - PLO1.outputFreq;
     
     // Next, using the frequency error, we can figure out a new fine tuning
-    // of the DDS to make the PLO1 output frequency very close to desired
+    // of the DDS to make the PLO1 output frequency very close to desired.
     double correctedDDS1 = IF2 + (PLO1_error/PLO1.n_divider) * PLO1.r_divider;
     DDS1.outputFreq = correctedDDS1;
     PLO1.refFreq = DDS1.outputFreq;
@@ -162,17 +267,72 @@
     
     inhibit_callbacks = NO;
     
-    printf("Tried to tune the analyzer to %f, achieved %f.  Error of %f hz.\n",
-           frequency,
-           PLO1.outputFreq - IF1,
-           (frequency - (PLO1.outputFreq - IF1)) * 1000000);
+//    printf("Tried to tune the analyzer to %f, achieved %f.  Error of %f hz.\n",
+//           frequency,
+//           PLO1.outputFreq - IF1,
+//           (frequency - (PLO1.outputFreq - IF1)) * 1000000);
 }
 
--(AnalyzerSample_t *)scanFrom:(double)startFreq
-                           To:(double)stopFreq
-                    withSteps:(NSInteger)steps
-                     andDelay:(NSInteger)delay
+-(void)startScanning
 {
+    scanning = YES;
+    
+    // I think a simple way to think about this is to assume that the system
+    // has already tuned to the desired frequency and measure the ADCs.
+    
+    // Sanitize the array
+    for (int i = 0; i < steps; i++) {
+        samples[i].magnitude = NAN;
+        samples[i].phase = NAN;        
+    }
+    
+    dispatch_async(scanQueue, ^{
+        // Calculate the variables for the scan
+        // We want to make sure that we actually hit the last frequency
+        // therefore, we want to subtract one from the steps.
+
+        int i = 0;
+        while (scanning) {
+            double deltaFreq = (stopFreq - startFreq) / (float)(steps - 1);
+            double freq = startFreq + (deltaFreq * i);
+
+            [self tuneTo:freq];
+            
+            currentStep = i;
+            double mag, phase;
+            [adc sampleCount:1
+                       Delay:delayMs
+                         Mag:&mag
+                       Phase:&phase
+                   Interface:interface];
+
+            samples[i].frequency = freq;
+            samples[i].magnitude = [self calculateDbFromCounts:mag];
+            samples[i].phase = phase;
+
+            if (delegate) {
+                if ([delegate respondsToSelector:@selector(sampleCollected:atStep:)]) {
+                    [delegate sampleCollected:samples[i] atStep:currentStep];
+                }
+            }
+            
+            i++;
+            if (i == steps) i = 0;
+        };
+    });
+}
+
+-(void)stopScanning
+{
+    scanning = NO;
+    dispatch_barrier_sync(scanQueue, ^{});
+}
+
+-(AnalyzerSample_t *)scanOnce
+{
+    // First stop any current scan
+    [self stopScanning];
+    
     double mag, phase;
     
     // We want to make sure that we actually hit the last frequency
@@ -190,7 +350,7 @@
         
         [self tuneTo:freq];
         [adc sampleCount:1
-                   Delay:delay
+                   Delay:delayMs
                      Mag:&mag
                    Phase:&phase
                Interface:interface];
@@ -203,12 +363,10 @@
     return results;
 }
 
-- (AnalyzerSample_t *)scanWithDDS:(AD_DDS *)dds
-                         fromFreq:(float)startFreq
-                           toFreq:(float)stopFreq
-                        withSteps:(NSInteger)steps
-                         andDelay:(NSInteger)mS
+-(AnalyzerSample_t *)scanOnceWithDDS:(AD_DDS *)dds
 {
+    [self stopScanning];
+
     double mag, phase;
 
     // We want to make sure that we actually hit the last frequency
@@ -226,7 +384,7 @@
         [DDS1 setOutputFreq:freq];
         [DDS1 updateHardware:interface];
         [adc sampleCount:1
-                   Delay:mS
+                   Delay:delayMs
                      Mag:&mag Phase:&phase
                Interface:interface];
         
@@ -238,12 +396,10 @@
     return results;
 }
 
-- (AnalyzerSample_t *)scanWithPLO:(LMX_PLL *)plo
-                         fromFreq:(float)startFreq
-                           toFreq:(float)stopFreq
-                        withSteps:(NSInteger)steps
-                         andDelay:(NSInteger)mS
+-(AnalyzerSample_t *)scanOnceWithPLO:(LMX_PLL *)plo
 {
+    [self stopScanning];
+
     double mag, phase;
     
     // We want to make sure that we actually hit the last frequency
@@ -282,7 +438,7 @@
         inhibit_callbacks = NO;
         
         [adc sampleCount:1
-                   Delay:mS
+                   Delay:delayMs
                      Mag:&mag Phase:&phase
                Interface:interface];
 

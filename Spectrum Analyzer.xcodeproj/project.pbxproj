@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3C12545814E2222600D3A966 /* SpectrumView.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C12545714E2222600D3A966 /* SpectrumView.m */; };
+		3C13234914FA070600810DA0 /* SpectrumController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C30149914F7314F008D9DD9 /* SpectrumController.m */; };
 		3C16DFAA14C7BBFD002162F4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C16DFA914C7BBFD002162F4 /* Cocoa.framework */; };
 		3C16DFB414C7BBFD002162F4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3C16DFB214C7BBFD002162F4 /* InfoPlist.strings */; };
 		3C16DFB614C7BBFD002162F4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C16DFB514C7BBFD002162F4 /* main.m */; };
@@ -437,6 +438,7 @@
 				3C22775414E0B27300F29768 /* HardwareInterface.m in Sources */,
 				3C22775514E0B27300F29768 /* BusPirate.m in Sources */,
 				3C22775614E0B27300F29768 /* Chipkit.m in Sources */,
+				3C13234914FA070600810DA0 /* SpectrumController.m in Sources */,
 				3C12545814E2222600D3A966 /* SpectrumView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

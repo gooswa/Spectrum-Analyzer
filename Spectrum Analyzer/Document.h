@@ -7,7 +7,11 @@
 //
 
 #import <Cocoa/Cocoa.h>
+@class SpectrumController;
 
 @interface Document : NSDocument
+
+@property (assign) IBOutlet SpectrumController *controller;
+
 
 @end
