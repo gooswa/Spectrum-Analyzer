@@ -135,7 +135,7 @@
     [PLO3 release];
     [DDS1 release];
     [DDS3 release];
-    [ADC release];
+    [adc release];
     
     [interface release];
     

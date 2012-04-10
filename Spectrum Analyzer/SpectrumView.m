@@ -213,6 +213,7 @@
     }
     
     [path stroke];
+    [path release];
 }
 
 - (void)drawVertGridsInRect:(NSRect)rect
@@ -266,9 +267,9 @@
     // draw a line from the low value to the high at the pixel.  If it works
     // out that there is only one sample for the pixel.  It is both the high
     // and the low value.
-    if (fabs(pixelsPerStep - 1.) < FLT_EPSILON ) {
+    if (pixelsPerStep < .99) {
         float min = FLT_MAX;
-        float max = FLT_MIN;
+        float max = -FLT_MAX;
         
         int lastSample = 0;
         
@@ -295,8 +296,8 @@
 
                 // Collect the minimum and maximum values
                 float magnitude = samples[i].magnitude;
-                min = (min < magnitude)? min : magnitude;
-                max = (max > magnitude)? max : magnitude;
+                if (max < magnitude) max = magnitude;
+                if (min > magnitude) min = magnitude;
             }
             
             // Draw a line from the minimum to maximum
@@ -338,6 +339,7 @@
     }
     
     [path stroke];
+    [path release];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

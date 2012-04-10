@@ -121,8 +121,6 @@
                  data:(long long)data
                  bits:(NSInteger)numBits
 {
-    uint8 retval;
-    
     // SPI transfers are made up of several spi transfers to load into the
     // shift registers.
     
@@ -153,7 +151,7 @@
             [port putByte:(1 << clockPin)];
         }
         [port putByte:CS_HIGH];
-        retval = [port getByte];
+        [port getByte];
 
         // Set the data pin
         // This will be true if the desired bit is high
@@ -162,28 +160,28 @@
             [port putByte:BULK_SPI];
             [port putByte:(1 << dataPin) | (1 << clockPin)];
             [port putByte:CS_HIGH];
-            retval = [port getByte];
+            [port getByte];
             
             // Lower the clock pin
             [port putByte:CS_LOW];
             [port putByte:BULK_SPI];
             [port putByte:(1 << dataPin)];
             [port putByte:CS_HIGH];
-            retval = [port getByte];
+            [port getByte];
 
         } else {
             [port putByte:CS_LOW];
             [port putByte:BULK_SPI];
             [port putByte:(1 << clockPin)];
             [port putByte:CS_HIGH];
-            retval = [port getByte];
+            [port getByte];
             
             // Lower the clock pin
             [port putByte:CS_LOW];
             [port putByte:BULK_SPI];
             [port putByte:0x00];
             [port putByte:CS_HIGH];
-            retval = [port getByte];
+            [port getByte];
         }        
     }
     
@@ -192,7 +190,7 @@
     [port putByte:BULK_SPI];
     [port putByte:(1 << CSPin)];
     [port putByte:CS_HIGH];
-    retval = [port getByte];
+    [port getByte];
     
     // Delay
     usleep(100);
@@ -202,7 +200,7 @@
     [port putByte:BULK_SPI];
     [port putByte:0x00];
     [port putByte:CS_HIGH];
-    retval = [port getByte];    
+    [port getByte];    
 }
 
 @end
