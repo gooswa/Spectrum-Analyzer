@@ -249,7 +249,7 @@
     int steps = [[controller analyzer] steps];
     AnalyzerSample_t *samples = [[controller analyzer] samples];
     
-    float pixelsPerStep = rect.size.width / steps;
+    float pixelsPerStep = (rect.size.width - 1) / steps;
     float dBRange = [controller vDevisions] * 10.;
     float pixelsPerDb = rect.size.height / dBRange;
     float bottomLevel = [controller vTopLevel] - ([controller vDevisions] * 10.);
@@ -266,13 +266,50 @@
     // draw a line from the low value to the high at the pixel.  If it works
     // out that there is only one sample for the pixel.  It is both the high
     // and the low value.
-    if (pixelsPerStep - FLT_EPSILON < 1.) {
+    if (fabs(pixelsPerStep - 1.) < FLT_EPSILON ) {
+        float min = FLT_MAX;
+        float max = FLT_MIN;
         
+        int lastSample = 0;
+        
+        // Iterate through the pixels
+        for (int i = 0; i < rect.size.width; i++) {
+            // Accumulate min and maxes for all steps that fall within this pixel
+            NSPoint thisPixel = [self pixelAlignPoint:NSMakePoint(rect.origin.x + i, 0.)
+                                             withSize:NSMakeSize(1., 1.)];
+
+            for (int j = lastSample; j < steps; j++) {
+                NSPoint testPixel = [self pixelAlignPoint:NSMakePoint(j * pixelsPerStep + rect.origin.x, 0.)
+                                                 withSize:NSMakeSize(1., 1.)];
+                
+                // If we've left the pixel, break out and start again
+                if (!NSEqualPoints(thisPixel, testPixel)) {
+                    lastSample = j;
+                    break;
+                }
+                
+                // If the sample is NAN don't count it
+                if (samples[i].magnitude == NAN) {
+                    continue;
+                }
+
+                // Collect the minimum and maximum values
+                float magnitude = samples[i].magnitude;
+                min = (min < magnitude)? min : magnitude;
+                max = (max > magnitude)? max : magnitude;
+            }
+            
+            // Draw a line from the minimum to maximum
+            float yMin = (min - bottomLevel) * pixelsPerDb + rect.origin.y;
+            float yMax = (max - bottomLevel) * pixelsPerDb + rect.origin.y;
+            [path moveToPoint:NSMakePoint(thisPixel.x, yMin)];
+            [path lineToPoint:NSMakePoint(thisPixel.x, yMax)];
+        }
     }
     
     // One-to-one mode means that each sample is exactly a single pixel
     // Undersample mode works the same as one-to-on mode.
-    if (fabs(pixelsPerStep - 1.) < FLT_EPSILON ) {
+    else {
         for (int i = 0; i < steps; i++) {
             // Cycle through the points in the graph converting the dBs to pixels
             float x = i * pixelsPerStep + rect.origin.x;
