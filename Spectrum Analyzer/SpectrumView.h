@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "SpectrumAnalyzer.h"
 
 @class Document;
 @class SpectrumController;
@@ -17,6 +18,9 @@
     IBOutlet Document *document;
     
     @private
+    
+    // Cached value
+    NSSize nativePixelsInGraph;
     
     // Text fields 
     NSTextField *titleTextField;
@@ -32,11 +36,13 @@
 }
 
 @property(assign) Document *document;
+@property(readonly) NSSize nativePixelsInGraph;
 
 // This provides access to the number of native device pixels
 // in the interior of the graph.  It can be used to sample the
 // experiment at the perfect resolution
-- (NSSize)nativePixelsInGraph;
+
+- (void)sampleCollected:(AnalyzerSample_t)sample atStep:(int)step;
 
 - (void)updateTextFields;
 

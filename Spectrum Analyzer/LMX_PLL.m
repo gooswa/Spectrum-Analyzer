@@ -227,10 +227,10 @@
             shadow[N_DIVIDER_REGISTER] = registers[N_DIVIDER_REGISTER];
         }
     } else {
-        printf("Tuning to %f (ref(%f) / r(%d)) * n(%d)) n -> ((b)%d * 32 + (a)%d)\n",
-               outputFreq, refFreq, int_r_divider, int_n_divider, int_b_divider, int_a_divider);
+//        printf("Tuning to %f (ref(%f) / r(%d)) * n(%d)) n -> ((b)%d * 32 + (a)%d)\n",
+//               outputFreq, refFreq, int_r_divider, int_n_divider, int_b_divider, int_a_divider);
         if (registers[FUNCTION_REGISTER] != shadow[FUNCTION_REGISTER]) {
-            printf("Updating the function register: 0x%x\n", registers[FUNCTION_REGISTER]);
+//            printf("Updating the function register: 0x%x\n", registers[FUNCTION_REGISTER]);
             // If we're initializing, don't copy the register into the shadow
             // there is a better version already there.
             if (initialize) {

@@ -156,8 +156,8 @@
 - (void)sampleCollected:(AnalyzerSample_t)sample atStep:(int)step
 {
     // This will get called every time a new sample is collected during scanning
-    
-    [spectrumView setNeedsDisplay:YES];
+    [spectrumView sampleCollected:sample atStep:step];
+//    [spectrumView setNeedsDisplay:YES];
 }
 
 // This is for either of the combo boxes (filters, for now)

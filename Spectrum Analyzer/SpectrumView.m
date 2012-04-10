@@ -13,7 +13,7 @@
 @implementation SpectrumView
 
 @synthesize document;
-
+@synthesize nativePixelsInGraph;
 // This method determines the location of the point in screen space
 // and rounds the value to yield pixel-aligned lines, which are sharp.
 // The size field is only used to compute a half-pixel offset in the case
@@ -65,21 +65,6 @@
     return field;
 }
 
-- (NSSize)nativePixelsInGraph
-{
-    float borderWidth = 60;
-    NSRect borderRect = NSInsetRect([self bounds],
-                                    borderWidth,
-                                    borderWidth);
-    
-    // Pixel-align the rect
-    borderRect.origin = [self pixelAlignPoint:borderRect.origin
-                                     withSize:NSMakeSize(1., 1.)];    
-
-    // Assume that points=pixels for now (not true in HiRes mode)
-    return borderRect.size;
-}
-
 - (void)viewBoundsChanged
 {
     NSRect frame = [self frame];
@@ -113,6 +98,18 @@
     textFrame.size.height = 25;
     [titleTextField setFrame:textFrame];
     
+    // Calculate native pixels in graph
+    float borderWidth = 60;
+    NSRect borderRect = NSInsetRect([self bounds],
+                                    borderWidth,
+                                    borderWidth);
+    
+    // Pixel-align the rect
+    borderRect.origin = [self pixelAlignPoint:borderRect.origin
+                                     withSize:NSMakeSize(1., 1.)];    
+    
+    // Assume that points=pixels for now (not true in HiRes mode)
+    nativePixelsInGraph = borderRect.size;
 }
 
 - (id)initWithFrame:(NSRect)frame
@@ -197,6 +194,7 @@
 {
     float heightPerDiv = rect.size.height / [controller vDevisions];
     NSBezierPath *path = [[NSBezierPath alloc] init];
+    [[NSColor darkGrayColor] set];
     [path setLineWidth:1.];
     
     for (int i = 0; i < [controller vDevisions]; i++) {
@@ -218,7 +216,7 @@
 
 - (void)drawVertGridsInRect:(NSRect)rect
 {
-    [[NSColor grayColor] set];
+    [[NSColor darkGrayColor] set];
     NSBezierPath *path = [NSBezierPath bezierPath];
 
     float deltaPixels = rect.size.width / 10.;
@@ -268,20 +266,24 @@
     // out that there is only one sample for the pixel.  It is both the high
     // and the low value.
     if (pixelsPerStep < .99) {
-        float min = FLT_MAX;
-        float max = -FLT_MAX;
-        
+        bool starting = YES;
         int lastSample = 0;
         
         // Iterate through the pixels
         for (int i = 0; i < rect.size.width; i++) {
+            float min = FLT_MAX;
+            float max = -FLT_MAX;
+            
             // Accumulate min and maxes for all steps that fall within this pixel
             NSPoint thisPixel = [self pixelAlignPoint:NSMakePoint(rect.origin.x + i, 0.)
                                              withSize:NSMakeSize(1., 1.)];
 
             for (int j = lastSample; j < steps; j++) {
-                NSPoint testPixel = [self pixelAlignPoint:NSMakePoint(j * pixelsPerStep + rect.origin.x, 0.)
-                                                 withSize:NSMakeSize(1., 1.)];
+                // Assume that point = pixels (this is usually true)
+//                NSPoint testPixel = [self pixelAlignPoint:NSMakePoint(j * pixelsPerStep + rect.origin.x, 0.)
+//                                                 withSize:NSMakeSize(1., 1.)];
+                NSPoint testPixel = NSMakePoint(thisPixel.x + round((j - lastSample)*pixelsPerStep),
+                                                thisPixel.y);
                 
                 // If we've left the pixel, break out and start again
                 if (!NSEqualPoints(thisPixel, testPixel)) {
@@ -295,7 +297,7 @@
                 }
 
                 // Collect the minimum and maximum values
-                float magnitude = samples[i].magnitude;
+                float magnitude = samples[j].magnitude;
                 if (max < magnitude) max = magnitude;
                 if (min > magnitude) min = magnitude;
             }
@@ -303,7 +305,11 @@
             // Draw a line from the minimum to maximum
             float yMin = (min - bottomLevel) * pixelsPerDb + rect.origin.y;
             float yMax = (max - bottomLevel) * pixelsPerDb + rect.origin.y;
-            [path moveToPoint:NSMakePoint(thisPixel.x, yMin)];
+            if (starting) {
+                [path moveToPoint:NSMakePoint(thisPixel.x, yMin)];
+            } else {
+                [path lineToPoint:NSMakePoint(thisPixel.x, yMin)];
+            }
             [path lineToPoint:NSMakePoint(thisPixel.x, yMax)];
         }
     }
@@ -340,6 +346,25 @@
     
     [path stroke];
     [path release];
+}
+
+- (void)sampleCollected:(AnalyzerSample_t)sample atStep:(int)step
+{
+    float pixelsPerStep = [self nativePixelsInGraph].width / [[controller analyzer] steps];
+
+    // If we're in overscan mode, only redisplay if we change pixel boundaries
+    if (pixelsPerStep < .99) {
+        float lastFloor = floorf((step - 1) * pixelsPerStep);
+        float thisFloor = floorf(step * pixelsPerStep);
+        if (lastFloor != thisFloor) {
+            [self setNeedsDisplay:YES];
+        }
+    }
+    
+    // If we're in 1-to-1 mode, we need to redisplay
+    else {
+        [self setNeedsDisplay:YES];
+    }
 }
 
 - (void)drawRect:(NSRect)dirtyRect
